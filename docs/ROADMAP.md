@@ -6,6 +6,8 @@
 - [x] Phase 2: Backend API (AWS SAM, DynamoDB, API Gateway, Local mock server)
 - [x] Phase 2.1: Honesty, Scenarios & Calibration (Heat-only hydration, scenario replays, WBGT calibration, response hygiene)
 - [x] Phase 3: Strands Agent & LLM Fallback (Bedrock Converse, TemplateAdvisor, Strict Validator)
+- [x] Phase 7a: Backend Deployment & Smoke Automation (AWS SAM, CloudWatch Alarms, smoke_api.ps1)
 - [ ] Phase 4: Web UI & Design Implementation
 - [ ] Phase 5: Proactive Alerts (EventBridge + SNS)
-- [ ] Phase 6: Deployment & Final Polish
+- [ ] Phase 6: Final Polish & Full Production Cutover
+
