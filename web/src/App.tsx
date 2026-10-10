@@ -19,7 +19,7 @@ const DesignPage = lazy(() => import('./pages/Design').then((m) => ({ default: m
 const ReportPage = lazy(() => import('./pages/Report').then((m) => ({ default: m.Report })));
 const AnalyticsPage = lazy(() => import('./pages/Analytics').then((m) => ({ default: m.Analytics })));
 const AuditPage = lazy(() => import('./pages/Audit').then((m) => ({ default: m.Audit })));
-const SafetyPage = lazy(() => import('./pages/Placeholders').then((m) => ({ default: m.SafetyPage })));
+const SafetyPage = lazy(() => import('./pages/Safety').then((m) => ({ default: m.Safety })));
 
 const AppContent: React.FC = () => {
   const [helpOpen, setHelpOpen] = useState(false);
