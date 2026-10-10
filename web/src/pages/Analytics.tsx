@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { client } from '../api/client';
-import type { DayPlan, GlobalStats, Scenario, JobType, RiskLevel } from '../api/types';
+import type { DayPlan, GlobalStats, Scenario, JobType, HourStatus } from '../api/types';
 import { LoadingSkeleton, ErrorState } from '../components/Feedback';
-import { BarChart, BarChartItem } from '../components/BarChart';
+import { BarChart } from '../components/BarChart';
+import type { BarChartItem } from '../components/BarChart';
 
 interface ScenarioComparisonData {
   scenario: Scenario;
@@ -10,10 +11,10 @@ interface ScenarioComparisonData {
 }
 
 const JOBS: { id: JobType; label: string }[] = [
-  { id: 'delivery', label: 'Delivery' },
-  { id: 'construction', label: 'Construction' },
-  { id: 'waste_collection', label: 'Waste Collection' },
-  { id: 'security', label: 'Security' },
+  { id: 'RIDER', label: 'Rider / Delivery' },
+  { id: 'CONSTRUCTION', label: 'Construction' },
+  { id: 'SANITATION', label: 'Sanitation / Waste' },
+  { id: 'VENDOR', label: 'Street Vendor' },
 ];
 
 export const Analytics: React.FC = () => {
@@ -40,13 +41,13 @@ export const Analytics: React.FC = () => {
         scenariosRes.scenarios.map(async (sc) => {
           const p = await client.getPlan({
             city_id: sc.city_id,
-            job_type: 'delivery',
-            workload: 'moderate',
-            sun_exposure: 'direct_sun',
-            shift_start_hour: 6,
-            shift_duration_hours: 12,
-            max_continuous_hours: 4,
-            scenario_id: sc.id,
+            job_type: 'RIDER',
+            workload: 'MODERATE',
+            sun_exposure: 'FULL',
+            preferred_start_hour: 6,
+            preferred_end_hour: 18,
+            max_shift_hours: 10,
+            scenario: sc.id,
           });
           return { scenario: sc, plan: p };
         })
@@ -67,7 +68,7 @@ export const Analytics: React.FC = () => {
   const getJobDistributionData = (selectedPlan: DayPlan): BarChartItem[] => {
     return JOBS.map((job) => {
       // In Chhaya engine, heavier workloads trigger lower WBGT thresholds
-      const counts: Record<RiskLevel, number> = {
+      const counts: Record<HourStatus, number> = {
         WORK: 0,
         CAUTION: 0,
         REDUCED: 0,
@@ -82,8 +83,8 @@ export const Analytics: React.FC = () => {
       selectedPlan.hours.forEach((h) => {
         // Adjust threshold offset by job
         const wbgt = h.wbgt_c;
-        const limit = job.id === 'construction' ? 26.0 : job.id === 'waste_collection' ? 28.0 : 30.0;
-        let risk: RiskLevel = 'WORK';
+        const limit = job.id === 'CONSTRUCTION' ? 26.0 : job.id === 'SANITATION' ? 28.0 : 30.0;
+        let risk: HourStatus = 'WORK';
         if (wbgt >= limit + 4.0) risk = 'REST';
         else if (wbgt >= limit + 2.5) risk = 'AVOID';
         else if (wbgt >= limit + 1.0) risk = 'REDUCED';

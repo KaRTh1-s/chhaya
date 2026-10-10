@@ -5,7 +5,7 @@ export interface StackService {
   live: boolean;
 }
 
-export const APP_VERSION = '0.4.0';
+export const APP_VERSION = '0.5.0';
 
 /**
  * Honest AWS stack configuration.

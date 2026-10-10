@@ -5,6 +5,7 @@ interface CardProps {
   variant?: 'beige' | 'dark' | 'white';
   className?: string;
   style?: React.CSSProperties;
+  onClick?: () => void;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -12,10 +13,11 @@ export const Card: React.FC<CardProps> = ({
   variant = 'beige',
   className = '',
   style,
+  onClick,
 }) => {
   const variantClass = variant === 'dark' ? 'card-dark' : variant === 'white' ? 'card-white' : '';
   return (
-    <div className={`card ${variantClass} ${className}`.trim()} style={style}>
+    <div className={`card ${variantClass} ${className}`.trim()} style={style} onClick={onClick}>
       {children}
     </div>
   );

@@ -7,16 +7,16 @@ import { LoadingSkeleton, ErrorState } from '../components/Feedback';
 import { formatReportText } from '../utils/formatters';
 
 const JOBS: { id: JobType; label: string; icon: string }[] = [
-  { id: 'delivery', label: 'Delivery / Gig', icon: '🛵' },
-  { id: 'construction', label: 'Construction', icon: '🏗️' },
-  { id: 'waste_collection', label: 'Waste Collection', icon: '🧹' },
-  { id: 'security', label: 'Security / Guard', icon: '🛡️' },
+  { id: 'RIDER', label: 'Delivery / Rider', icon: '🛵' },
+  { id: 'CONSTRUCTION', label: 'Construction', icon: '🏗️' },
+  { id: 'SANITATION', label: 'Sanitation / Waste', icon: '🧹' },
+  { id: 'VENDOR', label: 'Street Vendor', icon: '🛡️' },
 ];
 
 export const Report: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialCity = searchParams.get('city') || 'delhi';
-  const initialJob = (searchParams.get('job') as JobType) || 'delivery';
+  const initialJob = (searchParams.get('job') as JobType) || 'RIDER';
 
   const [cities, setCities] = useState<City[]>([]);
   const [selectedCity, setSelectedCity] = useState<string>(initialCity);
@@ -47,11 +47,11 @@ export const Report: React.FC = () => {
       const planRes = await client.getPlan({
         city_id: selectedCity,
         job_type: selectedJob,
-        workload: selectedJob === 'construction' ? 'heavy' : selectedJob === 'waste_collection' ? 'moderate' : 'light',
-        sun_exposure: 'direct_sun',
-        shift_start_hour: 8,
-        shift_duration_hours: 10,
-        max_continuous_hours: 4,
+        workload: selectedJob === 'CONSTRUCTION' ? 'HEAVY' : selectedJob === 'SANITATION' ? 'MODERATE' : 'LIGHT',
+        sun_exposure: 'FULL',
+        preferred_start_hour: 8,
+        preferred_end_hour: 18,
+        max_shift_hours: 10,
       });
       setPlan(planRes);
     } catch (err: any) {
@@ -88,10 +88,10 @@ export const Report: React.FC = () => {
   const currentJobObj = JOBS.find((j) => j.id === selectedJob);
   const dateStr = plan?.recorded_date || new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
 
-  const maxWbgt = plan?.hours?.length ? Math.max(...plan.hours.map((h) => h.wbgt_c || 0)) : (plan?.max_wbgt_c ?? 0);
-  const maxAqi = plan?.hours?.length ? Math.max(...plan.hours.map((h) => h.aqi || 0)) : (plan?.max_aqi ?? 0);
-  const hoursFlagged = plan?.hours?.length ? plan.hours.filter((h) => ['CAUTION', 'REDUCED', 'AVOID', 'REST'].includes(h.status)).length : (plan?.hours_flagged ?? 0);
-  const aqiFlagged = plan?.hours?.some((h) => (h.aqi || 0) > 150) || (plan?.aqi_hours_over_threshold ?? 0) > 0;
+  const maxWbgt = plan?.hours?.length ? Math.max(...plan.hours.map((h) => h.wbgt_c || 0)) : 0;
+  const maxAqi = plan?.hours?.length ? Math.max(...plan.hours.map((h) => h.aqi || 0)) : 0;
+  const hoursFlagged = plan?.hours?.length ? plan.hours.filter((h) => ['CAUTION', 'REDUCED', 'AVOID', 'REST'].includes(h.status)).length : 0;
+  const aqiFlagged = (plan?.hours?.some((h) => (h.aqi || 0) > 150)) ?? false;
 
   return (
     <div className="report-page">
@@ -181,13 +181,12 @@ export const Report: React.FC = () => {
             <div className="banner-left">
               <span className="summary-label">OVERALL SHIFT EXPOSURE LEVEL</span>
               <div className="risk-display">
-                <RiskPill level={plan.overall_risk} size="lg" />
+                <RiskPill level={plan.overall_risk} />
                 <span className="risk-explanation">
-                  {plan.overall_risk === 'REST' && 'Critical thermal hazard. Mandatory halt to outdoor manual exertion during peak hours.'}
-                  {plan.overall_risk === 'AVOID' && 'High thermal stress. Reduce workload and enforce shaded breaks.'}
-                  {plan.overall_risk === 'REDUCED' && 'Moderate stress. Work-rest cycles and active hydration protocol active.'}
-                  {plan.overall_risk === 'CAUTION' && 'Elevated discomfort. Hydration monitoring recommended.'}
-                  {plan.overall_risk === 'WORK' && 'Normal operational envelope with standard baseline hydration.'}
+                  {plan.overall_risk === 'EXTREME' && 'Critical thermal hazard. Mandatory halt to outdoor manual exertion during peak hours.'}
+                  {plan.overall_risk === 'HIGH' && 'High thermal stress. Reduce workload and enforce shaded breaks.'}
+                  {plan.overall_risk === 'MODERATE' && 'Moderate stress. Work-rest cycles and active hydration protocol active.'}
+                  {plan.overall_risk === 'LOW' && 'Normal operational envelope with standard baseline hydration.'}
                 </span>
               </div>
             </div>
@@ -222,7 +221,7 @@ export const Report: React.FC = () => {
                         {new Date(w.end).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
                       </div>
                       <div className="wb-badge">
-                        <RiskPill level={w.status} size="sm" />
+                        <RiskPill level={w.status} />
                       </div>
                       <div className="wb-metrics">
                         <span>Status: {w.status}</span>
@@ -283,10 +282,10 @@ export const Report: React.FC = () => {
                 <div className="proto-text">
                   <strong>Rest-to-Work Ratios</strong>
                   <p>
-                    {plan.overall_risk === 'REST' && 'Halt manual outdoor labor. Move crews into active cool zones.'}
-                    {plan.overall_risk === 'AVOID' && 'Minimum 30 minutes shaded rest per 30 minutes exertion.'}
-                    {plan.overall_risk === 'REDUCED' && '15 minutes shaded rest per 45 minutes exertion.'}
-                    {['CAUTION', 'WORK'].includes(plan.overall_risk) && 'Standard 10-15 minute hourly recovery breaks.'}
+                    {plan.overall_risk === 'EXTREME' && 'Halt manual outdoor labor. Move crews into active cool zones.'}
+                    {plan.overall_risk === 'HIGH' && 'Minimum 30 minutes shaded rest per 30 minutes exertion.'}
+                    {plan.overall_risk === 'MODERATE' && '15 minutes shaded rest per 45 minutes exertion.'}
+                    {plan.overall_risk === 'LOW' && 'Standard 10-15 minute hourly recovery breaks.'}
                   </p>
                 </div>
               </div>
@@ -328,7 +327,7 @@ export const Report: React.FC = () => {
                             <td className="text-muted">{cityObj?.state || ''}</td>
                             <td>{(c.peak_12h_wbgt_c ?? c.current_wbgt_c ?? 0).toFixed(1)}°C</td>
                             <td>{(c.current_aqi ?? 0).toFixed(0)}</td>
-                            <td><RiskPill level={c.current_risk} size="sm" /></td>
+                            <td><RiskPill level={c.current_risk} /></td>
                           </tr>
                         );
                       })}

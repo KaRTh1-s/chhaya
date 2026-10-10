@@ -612,7 +612,7 @@ export const PlansPage: React.FC = () => {
                 24-HOUR EXPOSURE RIBBON
               </span>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-ink-muted)' }}>
-                Hourly ISO 7243 WBGT heat stress &amp; AQI tier
+                Hourly WBGT heat stress &amp; AQI tier
               </span>
             </div>
             <HourRibbon hours={plan.hours} />

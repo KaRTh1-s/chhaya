@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from './Button';
 
-export const LoadingSkeleton: React.FC<{ rows?: number; height?: string; className?: string }> = ({
+export const LoadingSkeleton: React.FC<{ rows?: number; height?: string | number; className?: string }> = ({
   rows = 3,
   height = '20px',
   className = '',
@@ -12,7 +12,7 @@ export const LoadingSkeleton: React.FC<{ rows?: number; height?: string; classNa
         <div
           key={i}
           style={{
-            height,
+            height: typeof height === 'number' ? `${height}px` : height,
             backgroundColor: 'rgba(27, 27, 27, 0.08)',
             borderRadius: 'var(--radius-sm)',
             marginBottom: '10px',
@@ -69,11 +69,16 @@ export const ErrorState: React.FC<{
 
 export const EmptyState: React.FC<{
   title: string;
-  description: string;
+  description?: string;
+  message?: string;
   actionText?: string;
+  actionLabel?: string;
   onAction?: () => void;
   className?: string;
-}> = ({ title, description, actionText, onAction, className = '' }) => {
+}> = ({ title, description, message, actionText, actionLabel, onAction, className = '' }) => {
+  const desc = description || message || '';
+  const btnText = actionText || actionLabel;
+
   return (
     <div
       className={`empty-state-card ${className}`.trim()}
@@ -90,11 +95,11 @@ export const EmptyState: React.FC<{
         {title}
       </h3>
       <p style={{ color: 'var(--color-ink-muted)', fontSize: '0.9rem', maxWidth: '420px', margin: '0 auto var(--space-4)' }}>
-        {description}
+        {desc}
       </p>
-      {actionText && onAction && (
+      {btnText && onAction && (
         <Button variant="secondary" onClick={onAction}>
-          {actionText}
+          {btnText}
         </Button>
       )}
     </div>

@@ -289,7 +289,7 @@ export const Home: React.FC = () => {
               </div>
             </div>
             <div style={{ marginTop: '24px', padding: '12px', backgroundColor: 'var(--color-lavender-light)', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-forest)', fontWeight: 500 }}>
-              Pinned to Open-Meteo hourly readings &middot; ISO 7243 WBGT standards &middot; Hindi / Tamil / English
+              Pinned to Open-Meteo & CAMS modelled data &middot; Calibrated WBGT working thresholds &middot; Hindi / Tamil / English
             </div>
           </Card>
         </div>
@@ -317,7 +317,7 @@ export const Home: React.FC = () => {
             {
               step: '03',
               title: 'Deterministic Engine',
-              desc: 'Python/TypeScript engine computes ISO 7243 WBGT heat stress, compares to workload limits, and identifies safe vs avoid windows.',
+              desc: 'Python engine computes physical WBGT heat stress, compares to workload limits, and identifies safe vs avoid windows.',
             },
             {
               step: '04',

@@ -110,6 +110,6 @@ export const SafetyPage: React.FC = () => (
   <PagePlaceholder
     kicker="ASSUMPTIONS & THRESHOLDS"
     title="The open *assumptions ledger.*"
-    description="Scientific basis for our ISO 7243 WBGT formulas, AQI workload multipliers, and emergency guidelines."
+    description="Scientific basis for our calibrated WBGT formulas, AQI workload multipliers, and emergency guidelines."
   />
 );
