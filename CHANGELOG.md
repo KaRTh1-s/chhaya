@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-10-10
+### Added
+- AWS CloudFormation static web hosting infrastructure template (`infra/web-hosting.yaml`) with private S3 bucket, CloudFront Origin Access Control (OAC), custom response security headers (HSTS, CSP, X-Frame-Options DENY, Permissions-Policy), and SPA routing rewrites.
+- Automated deployment script (`scripts/deploy_web.ps1`) supporting environment parameterization, S3 asset syncing with optimal HTTP caching (1-year immutable for `/assets/*`, immediate revalidation for `index.html`), CloudFront cache invalidation, and live smoke checks.
+- Automated teardown script (`scripts/teardown_web.ps1`) for clean environment deletion.
+- Frontend environment variable documentation and CORS guidelines in `web/.env.example`.
+- Automated Web Accessibility & Visual QA runner (`scripts/qa-web.mjs`) using Playwright and `@axe-core/playwright` with 18 automated screenshots across mobile and desktop viewport profiles.
+- Resilient `DemoFallbackBanner` rendered when API service is unreachable with `data-testid="mock-badge"`.
+- Keyboard accessibility fixes across all scrollable data tables and inline SVG chart containers (`tabIndex={0}`, `role="region"`, `aria-label`).
+- Worker-first mobile layout reordering on `/plans` placing actionable advisory, emergency guidance, and dangerous window alerts above raw metrics and curves.
+- Dynamic audit trail event type derivation and OpenAPI schema verification.
+
+### Changed
+- Wording tightened across UI to ensure total scientific transparency: removed unvalidated ISO claims, replaced "real-time" with "hourly modelled", and referenced National 112 / 108 emergency guidelines.
+- Dynamic live subsystem flag parsing (`VITE_STACK_LIVE`) defaulting cleanly to mock/laptop mode.
+
 ## [0.5.0] - 2026-10-10
 ### Added
 - Complete implementation of all 8 production application pages with code splitting (`React.lazy`), shared loading skeletons, error states with retry, empty states, and offline banner:
