@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2026-10-10
+### Added
+- State verification and fixtures audit automation `scripts/verify_state.ps1` and `scripts/verify_fixtures.py`.
+- WBGT physical sanity check and decision-band margin analysis (`scripts/verify_wbgt.py`) comparing calibrated WBGT against independent Liljegren outdoor reference model.
+- Locative city forms (`get_city_locative`) in `i18n.py` for natural Hindi (दिल्ली में) and Tamil (டெல்லியில், சென்னையில்) grammar.
+- Plain-language status descriptions (`get_status_description`) expressing work/rest schedules without raw enum names.
+- Strict validator rejection of raw system codes (e.g. `SEEK_HELP_*`, `HEAT_*`) and uppercase enum words in worker-facing advisories.
+- Parity tests verifying scenario IDs, fixture metadata dates, and OpenAPI specification alignment.
+
 ## [0.3.2] - 2026-10-10
 ### Added
 - Automated deployment script `scripts/deploy_backend.ps1` with test enforcement, build packaging, SAM linting, and secret validation.
