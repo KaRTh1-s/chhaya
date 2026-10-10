@@ -1,20 +1,120 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: >
-  chhaya
-  Sample SAM Template for chhaya
+Description: Chhaya Backend - Hyperlocal Heat & Air Exposure Copilot for Outdoor Workers
+
+Parameters:
+  WritePasscode:
+    Type: String
+    NoEcho: true
+    Default: "demo"
+    Description: Passcode required for write operations (X-Chhaya-Passcode)
+  CorsOrigin:
+    Type: String
+    Default: "*"
+    Description: Allowed CORS Origin header
+  AppVersion:
+    Type: String
+    Default: "0.2.0"
+    Description: Application version
+  DataMode:
+    Type: String
+    Default: "live"
+    AllowedValues:
+      - live
+      - fixture
+    Description: Weather & AQI data mode (live Open-Meteo or local fixtures)
 
 Globals:
   Function:
     Timeout: 30
-    MemorySize: 256
+    MemorySize: 512
     Runtime: python3.11
+    Architectures:
+      - arm64
 
 Resources:
-  HelloWorldFunction:
-    Type: AWS::Serverless::Function
+  DataTable:
+    Type: AWS::DynamoDB::Table
     Properties:
-      CodeUri: handlers/
-      Handler: app.lambda_handler
-      Architectures:
-        - x86_64
+      TableName: !Sub "chhaya-data-${AWS::StackName}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref CorsOrigin
+        AllowMethods:
+          - GET
+          - POST
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+          - X-Chhaya-Passcode
+          - Authorization
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 50
+        ThrottlingRateLimit: 25
+
+  ApiFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/chhaya-api-${AWS::StackName}"
+      RetentionInDays: 14
+
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    DependsOn:
+      - ApiFunctionLogGroup
+    Properties:
+      FunctionName: !Sub "chhaya-api-${AWS::StackName}"
+      CodeUri: ./build/
+      Handler: api.handler
+      Environment:
+        Variables:
+          CHHAYA_TABLE: !Ref DataTable
+          WRITE_PASSCODE: !Ref WritePasscode
+          CORS_ORIGIN: !Ref CorsOrigin
+          APP_VERSION: !Ref AppVersion
+          CHHAYA_DATA_MODE: !Ref DataMode
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DataTable
+      Events:
+        ProxyApiRoot:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /{proxy+}
+            Method: ANY
+        ProxyApiEmpty:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /
+            Method: ANY
+
+Outputs:
+  ApiUrl:
+    Description: Base URL for Chhaya HTTP API
+    Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+  TableName:
+    Description: DynamoDB Table Name
+    Value: !Ref DataTable

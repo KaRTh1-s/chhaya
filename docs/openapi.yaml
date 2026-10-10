@@ -1,0 +1,433 @@
+openapi: 3.0.3
+info:
+  title: Chhaya Backend API
+  description: Hyperlocal Heat & Air Exposure Copilot for Outdoor Workers in India.
+  version: 0.2.0
+servers:
+  - url: http://localhost:8787
+    description: Local development server
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Returns health status, current version, region, and data mode.
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  version:
+                    type: string
+                    example: 0.2.0
+                  region:
+                    type: string
+                    example: ap-south-1
+                  data_mode:
+                    type: string
+                    example: live
+                  time:
+                    type: string
+                    format: date-time
+
+  /cities:
+    get:
+      summary: List seeded cities
+      description: Returns all pre-configured cities with their geographic coordinates.
+      responses:
+        '200':
+          description: List of cities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/City'
+
+  /plan:
+    post:
+      summary: Generate worker day plan
+      description: Computes hourly WBGT and AQI risk, work/rest schedule, and recommendations.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanRequest'
+      responses:
+        '200':
+          description: DayPlan generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DayPlan'
+        '400':
+          description: Invalid request or coordinates out of India bounding box
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /board:
+    get:
+      summary: Get Risk Board matrix
+      description: Returns current and 12-hour peak exposure risk for all standard worker profiles across seeded cities.
+      responses:
+        '200':
+          description: Risk Board matrix
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated_at:
+                    type: string
+                    format: date-time
+                  cities:
+                    type: array
+                    items:
+                      type: object
+
+  /stats:
+    get:
+      summary: Get global impact statistics
+      description: Live metrics including plans generated, dangerous hours flagged, and crew numbers.
+      responses:
+        '200':
+          description: Global metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalStats'
+
+  /audit:
+    get:
+      summary: Get recent audit events
+      description: Append-only anonymized log of system actions (no PII stored).
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Recent audit events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  audit_events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditEvent'
+
+  /crews:
+    get:
+      summary: List all registered crews
+      description: Publicly viewable list of registered anonymous worker groups.
+      responses:
+        '200':
+          description: List of crews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  crews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Crew'
+    post:
+      summary: Register a new worker crew
+      description: Creates an anonymous crew profile (requires X-Chhaya-Passcode).
+      parameters:
+        - name: X-Chhaya-Passcode
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCrewRequest'
+      responses:
+        '201':
+          description: Crew created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  crew:
+                    $ref: '#/components/schemas/Crew'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - missing or invalid passcode
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /crews/{id}:
+    get:
+      summary: Get crew with live plan summary
+      description: Fetches crew details and current exposure risk summary.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Crew details with plan summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  crew:
+                    $ref: '#/components/schemas/CrewWithPlan'
+        '404':
+          description: Crew not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete a crew
+      description: Deletes a registered crew (requires X-Chhaya-Passcode).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: X-Chhaya-Passcode
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Crew deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted:
+                    type: boolean
+                    example: true
+                  crew_id:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Crew not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    City:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        lat:
+          type: number
+        lon:
+          type: number
+        state:
+          type: string
+
+    PlanRequest:
+      type: object
+      required:
+        - job_type
+      properties:
+        city_id:
+          type: string
+          example: delhi
+        lat:
+          type: number
+          example: 28.61
+        lon:
+          type: number
+          example: 77.23
+        job_type:
+          type: string
+          enum: [RIDER, CONSTRUCTION, VENDOR, SANITATION]
+        workload:
+          type: string
+          enum: [LIGHT, MODERATE, HEAVY]
+        sun_exposure:
+          type: string
+          enum: [FULL, PARTIAL, SHADE]
+        preferred_start_hour:
+          type: integer
+          default: 6
+        preferred_end_hour:
+          type: integer
+          default: 20
+        max_shift_hours:
+          type: integer
+          default: 8
+
+    DayPlan:
+      type: object
+      properties:
+        city_label:
+          type: string
+        generated_at:
+          type: string
+          format: date-time
+        hours:
+          type: array
+          items:
+            type: object
+        windows:
+          type: array
+          items:
+            type: object
+        dangerous_windows:
+          type: array
+          items:
+            type: object
+        recommended_blocks:
+          type: array
+          items:
+            type: object
+        no_safe_window:
+          type: boolean
+        overall_risk:
+          type: string
+          enum: [LOW, MODERATE, HIGH, EXTREME]
+        hydration:
+          type: object
+        mask:
+          type: object
+        seek_help_lines:
+          type: array
+          items:
+            type: string
+        evidence:
+          type: array
+          items:
+            type: object
+        assumptions_version:
+          type: string
+
+    GlobalStats:
+      type: object
+      properties:
+        plans_generated:
+          type: integer
+        cities_covered:
+          type: integer
+        hours_flagged:
+          type: integer
+        avg_lead_time_hours:
+          type: number
+        crews_registered:
+          type: integer
+        alerts_sent:
+          type: integer
+
+    AuditEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        event_type:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: object
+
+    Crew:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        city_id:
+          type: string
+        job_type:
+          type: string
+        workload:
+          type: string
+        size:
+          type: integer
+        created_at:
+          type: string
+
+    CrewWithPlan:
+      allOf:
+        - $ref: '#/components/schemas/Crew'
+        - type: object
+          properties:
+            plan_summary:
+              type: object
+
+    CreateCrewRequest:
+      type: object
+      required:
+        - name
+        - city_id
+        - job_type
+      properties:
+        name:
+          type: string
+        city_id:
+          type: string
+        job_type:
+          type: string
+          enum: [RIDER, CONSTRUCTION, VENDOR, SANITATION]
+        workload:
+          type: string
+          enum: [LIGHT, MODERATE, HEAVY]
+        size:
+          type: integer
+          default: 1
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
