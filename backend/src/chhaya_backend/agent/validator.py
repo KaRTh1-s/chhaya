@@ -1,10 +1,19 @@
-"""Strict grounding and safety validator for Chhaya Advisory Agent."""
+"""Strict grounding and safety validator for Chhaya Advisory Agent.
+Enforces:
+1. Valid JSON format with 1-5 sentences.
+2. Evidence ID verification.
+3. Strict number grounding against facts.allowed_numbers.
+4. Driving evidence citation rule: a sentence containing numbers/times must cite at least one evidence card matching those numbers/times.
+5. Script verification and prohibition of 3+ consecutive Latin words in Hindi/Tamil.
+6. Medical claims blocklist.
+"""
+from dataclasses import dataclass
 import json
 import re
-from dataclasses import dataclass
 from typing import Any
 
 from chhaya_backend.agent.facts import Facts
+from chhaya_backend.agent.i18n import ALLOWED_LATIN_TOKENS
 
 DEVANAGARI_DIGITS = str.maketrans("०१२३४५६७८९", "0123456789")
 TAMIL_DIGITS = str.maketrans("௦௧௨௩௪௫௬௭௮௯", "0123456789")
@@ -39,16 +48,31 @@ def extract_numbers_from_text(text: str) -> list[str]:
         tokens.append(m.group(0))
     return tokens
 
+def has_consecutive_latin_words(text: str, max_allowed: int = 2) -> bool:
+    """Check if text contains a run of >= 3 consecutive Latin words (excluding allowed technical tokens)."""
+    words = re.findall(r"\b[A-Za-z0-9\.\-\_]+\b", text)
+    consecutive_count = 0
+    for w in words:
+        # Check if word contains latin characters
+        clean_w = w.upper().strip(".,:-_")
+        if re.search(r"[A-Za-z]", clean_w):
+            if clean_w in ALLOWED_LATIN_TOKENS:
+                consecutive_count = 0 # reset on technical tokens like N95, ml
+            else:
+                consecutive_count += 1
+                if consecutive_count > max_allowed:
+                    return True
+        else:
+            consecutive_count = 0
+    return False
+
 def is_valid_script(text: str, language: str) -> bool:
     if language == "en":
-        # Check that there are Latin characters
         return bool(re.search(r"[a-zA-Z]", text))
     elif language == "hi":
-        # Must contain Devanagari characters (\u0900-\u097F)
         devanagari_count = len(re.findall(r"[\u0900-\u097F]", text))
         return devanagari_count >= 5
     elif language == "ta":
-        # Must contain Tamil characters (\u0B80-\u0BFF)
         tamil_count = len(re.findall(r"[\u0B80-\u0BFF]", text))
         return tamil_count >= 5
     return True
@@ -63,8 +87,7 @@ def validate_advisory_json(
         data = raw_response
     else:
         try:
-            # Strip markdown code blocks if present
-            cleaned = raw_response.strip()
+            cleaned = str(raw_response).strip()
             if cleaned.startswith("```json"):
                 cleaned = cleaned[7:]
             elif cleaned.startswith("```"):
@@ -90,6 +113,7 @@ def validate_advisory_json(
     valid_evidence_ids = facts.get_evidence_ids()
     allowed_numbers = facts.allowed_numbers
     blocklist = MEDICAL_BLOCKLIST.get(language, [])
+    ev_map = facts.evidence_id_to_numbers
 
     validated_sentences = []
     total_length = 0
@@ -101,9 +125,8 @@ def validate_advisory_json(
         text = str(s.get("text", "")).strip()
         ev_ids = s.get("evidence_ids")
 
-        # 5. Length limits
-        if not (5 <= len(text) <= 300):
-            return ValidationResult(False, [], f"Sentence {idx+1} length ({len(text)}) outside limits [5, 300]")
+        if not (5 <= len(text) <= 350):
+            return ValidationResult(False, [], f"Sentence {idx+1} length ({len(text)}) outside limits [5, 350]")
         total_length += len(text)
 
         # 3. Evidence ID verification
@@ -114,10 +137,9 @@ def validate_advisory_json(
             if eid not in valid_evidence_ids:
                 return ValidationResult(False, [], f"Sentence {idx+1} cited unknown evidence_id '{eid}'")
 
-        # 4. Number grounding (No hallucinated numbers)
+        # 4. Number Grounding against facts
         extracted_nums = extract_numbers_from_text(text)
         for num in extracted_nums:
-            # Check direct match or int match
             num_clean = num
             int_equiv = str(int(float(num))) if num.replace(".", "", 1).isdigit() else None
             
@@ -129,9 +151,34 @@ def validate_advisory_json(
             if not is_allowed:
                 return ValidationResult(False, [], f"Sentence {idx+1} contains ungrounded number '{num}'")
 
-        # 6. Script validation
+        # 5. Driving Evidence Citation Rule:
+        # If sentence contains numbers or times, at least one cited evidence card must contain matching numbers/times
+        # (Exclude universal counts like "250 ml", "15-20 min" hydration guidelines)
+        time_or_metric_nums = [
+            n for n in extracted_nums 
+            if n not in ("250", "15", "20", "15-20", "30", "45", "1", "2", "3", "4", "5")
+        ]
+        if time_or_metric_nums:
+            # Check if any cited evidence card contains at least one of these numbers/times
+            matched_citation = False
+            for eid in ev_ids:
+                card_nums = ev_map.get(eid, set())
+                if any(tn in card_nums or (tn.replace(":", "") in card_nums) for tn in time_or_metric_nums):
+                    matched_citation = True
+                    break
+            
+            if not matched_citation:
+                return ValidationResult(
+                    False, [], 
+                    f"Sentence {idx+1} mentions '{time_or_metric_nums}' but none of cited evidence_ids {ev_ids} match those numbers or times"
+                )
+
+        # 6. Script validation & Latin Run Check
         if not is_valid_script(text, language):
             return ValidationResult(False, [], f"Sentence {idx+1} is not written in the expected script for language '{language}'")
+
+        if language in ("hi", "ta") and has_consecutive_latin_words(text, max_allowed=2):
+            return ValidationResult(False, [], f"Sentence {idx+1} contains a run of 3+ consecutive Latin words in {language}")
 
         # 7. Medical blocklist check
         lower_text = text.lower()
@@ -144,7 +191,7 @@ def validate_advisory_json(
             "evidence_ids": [str(x) for x in ev_ids],
         })
 
-    if total_length > 1200:
-        return ValidationResult(False, [], f"Total advisory text length ({total_length}) exceeds 1200 characters")
+    if total_length > 1400:
+        return ValidationResult(False, [], f"Total advisory text length ({total_length}) exceeds 1400 characters")
 
     return ValidationResult(True, validated_sentences, None)
