@@ -5,12 +5,13 @@ Chhaya is designed as a serverless, decoupled microservice built on AWS Lambda, 
 
 ## Split Lambda Architecture
 
-To ensure sub-20ms cold starts for core planning calculations while enabling rich generative AI worker guidance, the backend is split into two specialized Lambda functions:
+To maintain fast cold starts for core planning calculations while isolating generative AI worker guidance dependencies, the backend is split into two specialized Lambda functions:
 
 1. **`ApiFunction` (Core Engine & Data Plane)**:
    - Zero 3rd-party runtime dependencies (Python 3.11 stdlib + `boto3` + `chhaya_engine`).
    - Handles `/health`, `/cities`, `/scenarios`, `/plan`, `/board`, `/stats`, `/audit`, `/crews`.
    - Memory: 512 MB, Timeout: 30s.
+
 
 2. **`AdvisorFunction` (Generative AI & Plain-Language Copilot)**:
    - Dedicated handler for `POST /advise`.
