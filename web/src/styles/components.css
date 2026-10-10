@@ -61,6 +61,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  min-height: 44px;
   font-family: var(--font-serif);
   font-size: 1.25rem;
   font-weight: 600;
@@ -120,11 +121,12 @@
 }
 
 .nav-tab {
-  min-height: 40px;
+  min-height: 44px;
+  min-width: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 14px;
+  padding: 10px 16px;
   border-radius: var(--radius-pill);
   font-size: var(--font-size-small);
   font-weight: 500;
@@ -429,15 +431,25 @@
 
 @media (max-width: 640px) {
   .hour-ribbon-grid {
-    grid-template-columns: repeat(12, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 4px;
+    display: flex;
+    overflow-x: auto;
+    gap: 6px;
+    padding: 6px;
+    scrollbar-width: thin;
+  }
+  .hour-cell {
+    min-width: 48px;
+    min-height: 48px;
+    height: 48px;
+    flex-shrink: 0;
   }
 }
 
 .hour-cell {
   position: relative;
-  height: 38px;
+  min-width: 48px;
+  min-height: 48px;
+  height: 48px;
   border-radius: 4px;
   display: flex;
   flex-direction: column;
@@ -522,6 +534,23 @@
 .evidence-chip:hover {
   background-color: var(--color-lavender-cta);
   border-color: var(--color-ink);
+}
+
+@media (max-width: 768px) {
+  .btn, button, select, input[type="button"], input[type="submit"], input[type="reset"] {
+    min-height: 44px;
+  }
+  input[type="range"] {
+    min-height: 44px;
+  }
+  .evidence-chip {
+    min-height: 48px;
+    padding: 10px 14px;
+    margin: 4px;
+  }
+  .hour-cell {
+    min-height: 48px;
+  }
 }
 
 .evidence-modal-backdrop {
@@ -774,6 +803,9 @@
 .footer-col-list a {
   font-size: var(--font-size-small);
   color: var(--color-ink-muted);
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .footer-col-list a:hover {

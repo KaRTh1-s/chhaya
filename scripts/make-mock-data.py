@@ -183,12 +183,20 @@ def generate_all_mock_data():
         all_advisories[sc["id"]] = {}
         for lang in ["en", "hi", "ta"]:
             adv_res = advisor.advise(facts, lang)
+            sentences = []
+            for s in adv_res.sentences:
+                clean_text = s.text
+                if " today;" in clean_text:
+                    clean_text = clean_text.replace(" today;", " on this recorded day;")
+                elif " today " in clean_text:
+                    clean_text = clean_text.replace(" today ", " on this recorded day ")
+                elif clean_text.endswith(" today."):
+                    clean_text = clean_text[:-7] + " on this recorded day."
+                sentences.append({"text": clean_text, "evidence_ids": s.evidence_ids})
+
             all_advisories[sc["id"]][lang] = {
                 "language": lang,
-                "sentences": [
-                    {"text": s.text, "evidence_ids": s.evidence_ids}
-                    for s in adv_res.sentences
-                ],
+                "sentences": sentences,
                 "seek_help": adv_res.seek_help,
                 "mode": adv_res.mode,
                 "validated": adv_res.validated,

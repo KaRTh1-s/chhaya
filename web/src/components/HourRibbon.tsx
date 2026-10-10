@@ -82,6 +82,8 @@ export const HourRibbon: React.FC<HourRibbonProps> = ({
             <span>WBGT: {hoveredHour.wbgt_c.toFixed(1)}°C</span>
             {hoveredHour.aqi !== null && <span>AQI: {Math.round(hoveredHour.aqi)}</span>}
             <span>Risk: {hoveredHour.risk_level}</span>
+            {hoveredHour.heat_status && <span>Heat: {hoveredHour.heat_status}</span>}
+            {hoveredHour.air_status && <span>Air: {hoveredHour.air_status}</span>}
           </div>
           {hoveredHour.reasons.length > 0 && (
             <div style={{ fontSize: '0.75rem', opacity: 0.85, maxWidth: '240px', whiteSpace: 'normal' }}>

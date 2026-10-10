@@ -120,10 +120,10 @@ async function runQA() {
         let smallCount = 0;
         const smallElements = [];
         for (const el of interactive) {
+          if (el.tagName === 'A' && el.closest('p, .text-link, footer .footer-bottom')) continue;
           const rect = el.getBoundingClientRect();
           if (rect.width > 0 && rect.height > 0) {
-            if (rect.width < 32 || rect.height < 32) {
-              // Note: strictly testing actionable tap target zone
+            if (rect.width < 44 || rect.height < 44) {
               smallCount++;
               smallElements.push(`${el.tagName.toLowerCase()} "${(el.textContent || '').trim().slice(0, 15)}" (${Math.round(rect.width)}x${Math.round(rect.height)}px)`);
             }

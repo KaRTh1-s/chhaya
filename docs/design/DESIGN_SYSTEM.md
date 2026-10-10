@@ -75,9 +75,9 @@ All components are located in `web/src/components/` and showcased live at the [`
 5. **Card**: Rounded cards in beige (`#E3E1D0`), white, and deep forest variants (`24px` border radius).
 6. **StatBlock**: Large serif number paired with honest lowercase mono label and demo counter badge.
 7. **RiskPill**: Pill badge rendering risk level with live color coding.
-8. **HourRibbon**: 24-cell hourly strip colored by ISO 7243 WBGT and AQI risk tier. Displays rich tooltip on hover/focus and wraps responsively into two 12-hour rows on mobile.
+8. **HourRibbon**: 24-cell hourly strip colored by modeled WBGT and AQI risk tier. Displays rich tooltip on hover/focus and wraps responsively into two 12-hour rows on mobile.
 9. **WindowList**: Time range grouping component displaying safe vs avoid windows.
-10. **EvidenceChip**: Interactive tag linking phrases to underlying sensor records; opens accessible evidence modal dialog.
+10. **EvidenceChip**: Interactive tag linking phrases to underlying evidence records (modeled meteorological and air-quality data); opens accessible evidence modal dialog.
 11. **Ticker**: Marquee banner with AWS architecture stack that pauses on hover and respects `prefers-reduced-motion`.
 12. **FaqPanel**: Two-panel interactive widget featuring dark forest question navigation and warm beige answer details.
 13. **HelpButton**: Floating `?` button triggering accessible keyboard navigation guide modal.

@@ -51,7 +51,34 @@ export const WindowList: React.FC<WindowListProps> = ({
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 500 }}>
                 {formatTime(w.start)} &ndash; {formatTime(w.end)}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                {w.driver && (
+                  <span
+                    className="badge-driver"
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      padding: '2px 6px',
+                      borderRadius: 'var(--radius-pill)',
+                      backgroundColor:
+                        w.driver === 'HEAT'
+                          ? 'var(--risk-high-bg)'
+                          : w.driver === 'AIR'
+                          ? 'var(--color-cream-surface)'
+                          : 'var(--risk-extreme-bg)',
+                      color:
+                        w.driver === 'HEAT'
+                          ? 'var(--risk-high-text)'
+                          : w.driver === 'AIR'
+                          ? 'var(--color-ink)'
+                          : 'var(--risk-extreme-text)',
+                      border: '1px solid rgba(27,27,27,0.15)',
+                    }}
+                  >
+                    {w.driver === 'HEAT' ? '🔥 Heat' : w.driver === 'AIR' ? '🌫 Air' : '⚡ Heat+Air'}
+                  </span>
+                )}
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-ink-muted)' }}>
                   {w.summary_code}
                 </span>

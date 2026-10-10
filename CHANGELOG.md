@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-10-10
+### Added
+- Static hosting simulation and exact CloudFront CSP verification server (`scripts/serve-dist-with-csp.mjs`).
+- Full Playwright CSP automated validation across all 8 production routes (`scripts/test-csp.mjs`) confirming 0 CSP violations, 0 console errors, and 0 uncaught exceptions against local backend.
+- Full keyboard focus audit script on `/plans` (`scripts/test-plans-keyboard.mjs`) verifying 65 interactive controls in logical sequence, Enter key form submission, modal dialog opening, and Escape key focus return to `EvidenceChip`.
+- Attribution UI preparation: added optional `HourPlan.heat_status`, `HourPlan.air_status`, and `Window.driver` (`HEAT` | `AIR` | `BOTH`) to `types.ts`, displaying driver badges and ribbon tooltip statuses when present and cleanly omitted when absent.
+- Attribution unit test suite (`web/src/__tests__/attribution.test.tsx`).
+- Mobile tap target compliance: elevated nav tabs, brand link, buttons, chips, range inputs, and hour cells to minimum $44 \times 44$ CSS px on mobile viewports with horizontal scroll support.
+
+### Changed
+- Merged `main` (`v0.3.3`) into frontend branch with ordered CHANGELOG and ROADMAP preservation.
+- Updated `scripts/deploy_web.ps1` to require `-ApiUrl`, automatically derive origin (scheme + authority, no path), and pass it to CloudFormation stack parameter `ApiBaseUrl`.
+- Re-generated mock fixtures with `scripts/make-mock-data.py` using main repository Python virtual environment (`..\chhaya\.venv\Scripts\python.exe`), verifying non-empty datasets, zero raw `SEEK_HELP_` codes, zero bare enum words in sentences, replay advisories referencing "On this recorded day", and uniform `VENDOR` job types.
+- Corrected scientific vocabulary across `web/src` and `docs`, resolving all ungrounded terms.
+
 ## [0.5.1] - 2026-10-10
 ### Added
 - AWS CloudFormation static web hosting infrastructure template (`infra/web-hosting.yaml`) with private S3 bucket, CloudFront Origin Access Control (OAC), custom response security headers (HSTS, CSP, X-Frame-Options DENY, Permissions-Policy), and SPA routing rewrites.

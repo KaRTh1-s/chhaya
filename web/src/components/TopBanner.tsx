@@ -9,7 +9,7 @@ export const TopBanner: React.FC<{ services?: typeof STACK_SERVICES }> = ({ serv
     <aside className="top-banner" aria-label="Announcement banner">
       <span>
         {stackText} {deploymentText} v{APP_VERSION}.{' '}
-        <a href={LINKS.github} target="_blank" rel="noopener noreferrer">
+        <a href={LINKS.github} target="_blank" rel="noopener noreferrer" className="text-link">
           Judge access in the submission &rarr;
         </a>
       </span>

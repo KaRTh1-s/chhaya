@@ -41,7 +41,9 @@ param(
     [ValidateSet("dev", "staging", "prod")]
     [string]$Environment = "dev",
 
-    [string]$ApiUrl = "",
+    [Parameter(Mandatory = $true, HelpMessage = "Backend API Gateway or FastAPI endpoint URL is required.")]
+    [ValidateNotNullOrEmpty()]
+    [string]$ApiUrl,
 
     [string]$StackLive = "",
 
@@ -55,6 +57,19 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+# Validate ApiUrl is non-empty and derive Origin (scheme + host, no path or trailing slash)
+if ([string]::IsNullOrWhiteSpace($ApiUrl)) {
+    throw "Error: -ApiUrl is required and cannot be empty."
+}
+
+try {
+    $uri = [System.Uri]$ApiUrl
+    $ApiOrigin = "$($uri.Scheme)://$($uri.Authority)"
+} catch {
+    throw "Error: Invalid -ApiUrl format '$ApiUrl': $($_.Exception.Message)"
+}
+
 
 # Helper for AWS CLI arguments
 function Invoke-AwsCli {
@@ -96,8 +111,7 @@ $StackName = "chhaya-web-$Environment"
 $TemplatePath = Join-Path $PSScriptRoot "..\infra\web-hosting.yaml"
 
 Write-Host "`n[2/6] Deploying CloudFormation infrastructure ($StackName)..." -ForegroundColor Yellow
-$paramOverrides = @("EnvironmentName=$Environment")
-if ($ApiUrl) { $paramOverrides += "ApiBaseUrl=$ApiUrl" }
+$paramOverrides = @("EnvironmentName=$Environment", "ApiBaseUrl=$ApiOrigin")
 if ($DomainName) { $paramOverrides += "DomainName=$DomainName" }
 if ($AcmCertArn) { $paramOverrides += "AcmCertificateArn=$AcmCertArn" }
 

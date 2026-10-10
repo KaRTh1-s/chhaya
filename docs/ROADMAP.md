@@ -11,6 +11,7 @@
 - [x] Phase 4: Web UI & Design System Foundation
 - [x] Phase 5: Web UI Real Pages & Integration
 - [x] Phase 5.1: Web UI Hardening, Accessibility & Hosting Infrastructure Prep
+- [x] Phase 5.2: Integration, CSP Validation, Tap Target Compliance & Gap Closing
 - [x] Phase 7a: Backend Deployment & Smoke Automation (AWS SAM, CloudWatch Alarms, smoke_api.ps1)
 - [ ] Phase 6: Proactive Alerts (EventBridge + SNS)
 - [ ] Phase 7: Deployment & Final Polish

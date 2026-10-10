@@ -17,6 +17,14 @@
   },
   {
     "component": "Heat",
+    "assumption": "WBGT Safety Margin",
+    "value": "Not added (`0.0 \u00b0C`)",
+    "why": "Calibration audit against Liljegren across all 4 fixtures showed that for dangerous heat (WBGT $\\ge 28^\\circ\\text{C}$), the maximum underestimate was $0.90^\\circ\\text{C}$ (Chennai) and $0.47^\\circ\\text{C}$ (Delhi), neither exceeding the $1.5^\\circ\\text{C}$ threshold.",
+    "source": "`scripts/calibrate_wbgt.py` measurement",
+    "status": "Verified by measurement on 4 fixtures"
+  },
+  {
+    "component": "Heat",
     "assumption": "WBGT continuous work limits",
     "value": "Light: 30\u00b0C, Mod: 28\u00b0C, Heavy: 26\u00b0C",
     "why": "Safe starting points for acclimatized workers",
@@ -67,7 +75,7 @@
     "component": "Agent",
     "assumption": "Bedrock Model ID",
     "value": "`apac.amazon.nova-micro-v1:0` (or `apac.anthropic.claude-3-5-sonnet-20241022-v2:0`)",
-    "why": "Ultra-fast inference (<400ms), low-cost cross-region inference profile in `ap-south-1` / `us-east-1`.",
+    "why": "Ultra-fast inference, low-cost cross-region inference profile in `ap-south-1` / `us-east-1`.",
     "source": "AWS Bedrock Regional Availability",
     "status": "Verified"
   },
@@ -82,15 +90,23 @@
   {
     "component": "Agent",
     "assumption": "Strict Grounding Verification",
-    "value": "1-5 sentences; evidence citations; allowed-numbers set; script check; medical claim blocklist",
+    "value": "1-5 sentences; evidence citations; allowed-numbers set; driving evidence match; Latin run check; medical blocklist",
     "why": "Completely eliminates hallucinations and ungrounded safety advice.",
     "source": "Safety Engineering",
     "status": "Verified"
   },
   {
     "component": "Agent",
+    "assumption": "Multilingual Localisation",
+    "value": "English, Hindi (`hi`), Tamil (`ta`)",
+    "why": "Full localization of cities, risk terms, window guidance, hydration, and seek-help lines.",
+    "source": "`i18n.py` / `docs/i18n_review.md`",
+    "status": "Machine-written, needs native speaker review"
+  },
+  {
+    "component": "Agent",
     "assumption": "Prompt Versioning",
-    "value": "`PROMPT_VERSION = \"1.0.0\"`",
+    "value": "`PROMPT_VERSION = \"1.1.0\"`",
     "why": "Tracks exact prompt template version in audit log and response payload for traceability.",
     "source": "Governance",
     "status": "Verified"
@@ -99,7 +115,7 @@
     "component": "Stats",
     "assumption": "Flagged Hours (`hours_flagged`)",
     "value": "Count of AVOID or REDUCED(15/45) hours across generated DayPlans",
-    "why": "Accurately identifies acute exposure hours prevented",
+    "why": "Operational metric identifying acute exposure hours flagged",
     "source": "Operational Definition",
     "status": "Verified"
   },

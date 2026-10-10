@@ -58,6 +58,8 @@ export interface EvidenceCard {
   hour_range?: string;
 }
 
+export type WindowDriver = 'HEAT' | 'AIR' | 'BOTH';
+
 export interface HourPlan {
   hour: string;
   status: HourStatus;
@@ -68,6 +70,8 @@ export interface HourPlan {
   reasons: string[];
   evidence_ids: string[];
   hydration?: 'NORMAL' | 'FREQUENT';
+  heat_status?: HourStatus;
+  air_status?: HourStatus;
 }
 
 export interface Window {
@@ -75,6 +79,9 @@ export interface Window {
   end: string;
   status: HourStatus;
   summary_code: string;
+  driver?: WindowDriver;
+  heat_status?: HourStatus;
+  air_status?: HourStatus;
 }
 
 export interface DayPlan {

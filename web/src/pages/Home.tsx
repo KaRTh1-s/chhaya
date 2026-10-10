@@ -158,12 +158,17 @@ export const Home: React.FC = () => {
                         style={{
                           fontFamily: 'var(--font-mono)',
                           fontSize: '0.75rem',
-                          padding: '3px 10px',
+                          minWidth: '48px',
+                          minHeight: '48px',
+                          padding: '8px 12px',
                           borderRadius: 'var(--radius-pill)',
                           border: activeLang === lang ? '1px solid var(--color-ink)' : '1px solid transparent',
                           backgroundColor: activeLang === lang ? '#FFFFFF' : 'transparent',
                           fontWeight: activeLang === lang ? 600 : 400,
                           cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                       >
                         {lang === 'en' ? 'EN' : lang === 'hi' ? 'हिन्दी' : 'தமிழ்'}
@@ -389,7 +394,7 @@ export const Home: React.FC = () => {
               Works without Bedrock
             </h3>
             <p>
-              Zero-LLM fallback mode guarantees that even during cloud LLM outages or network partition, deterministic template advisories are produced instantly.
+              Zero-LLM fallback mode ensures that even during cloud LLM outages or network partition, deterministic template advisories are produced instantly.
             </p>
           </Card>
 

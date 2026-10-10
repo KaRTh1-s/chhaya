@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { EvidenceCard } from '../api/types';
 
 interface EvidenceChipProps {
@@ -8,10 +8,32 @@ interface EvidenceChipProps {
 
 export const EvidenceChip: React.FC<EvidenceChipProps> = ({ card, className = '' }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setIsOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
+  const handleClose = () => {
+    setIsOpen(false);
+    triggerRef.current?.focus();
+  };
 
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         className={`evidence-chip ${className}`.trim()}
         onClick={() => setIsOpen(true)}
@@ -26,7 +48,7 @@ export const EvidenceChip: React.FC<EvidenceChipProps> = ({ card, className = ''
       {isOpen && (
         <div
           className="evidence-modal-backdrop"
-          onClick={() => setIsOpen(false)}
+          onClick={handleClose}
           role="presentation"
         >
           <div
@@ -42,7 +64,7 @@ export const EvidenceChip: React.FC<EvidenceChipProps> = ({ card, className = ''
               </div>
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
                 style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', fontWeight: 600, padding: '4px 8px' }}
                 aria-label="Close dialog"
               >
@@ -78,7 +100,7 @@ export const EvidenceChip: React.FC<EvidenceChipProps> = ({ card, className = ''
                 type="button"
                 className="btn btn-primary"
                 style={{ padding: '6px 16px', fontSize: '0.875rem' }}
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
               >
                 Close
               </button>

@@ -447,7 +447,8 @@
     "type": "N95/FFP2"
   },
   "seek_help_lines": [
-    "Stop work, move to shade, and call emergency services if you experience confusion, fainting, or stop sweating."
+    "SEEK_HELP_HEAT_ILLNESS",
+    "SEEK_HELP_AIR_POLLUTION"
   ],
   "evidence": [
     {
