@@ -1,0 +1,788 @@
+{
+  "city_label": "Chennai",
+  "generated_at": "2025-05-31T12:00:00+05:30",
+  "hours": [
+    {
+      "hour": "2025-05-31T00:00:00+05:30",
+      "status": "REST",
+      "wbgt_c": 31.094670246141728,
+      "aqi": 35.833333333333336,
+      "aqi_category": "Good",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "OUTSIDE_SHIFT_WINDOW"
+      ],
+      "evidence_ids": []
+    },
+    {
+      "hour": "2025-05-31T01:00:00+05:30",
+      "status": "REST",
+      "wbgt_c": 30.995518438539325,
+      "aqi": 33.50000000000001,
+      "aqi_category": "Good",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "OUTSIDE_SHIFT_WINDOW"
+      ],
+      "evidence_ids": []
+    },
+    {
+      "hour": "2025-05-31T02:00:00+05:30",
+      "status": "REST",
+      "wbgt_c": 30.9721739962792,
+      "aqi": 29.833333333333332,
+      "aqi_category": "Good",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "OUTSIDE_SHIFT_WINDOW"
+      ],
+      "evidence_ids": []
+    },
+    {
+      "hour": "2025-05-31T03:00:00+05:30",
+      "status": "REST",
+      "wbgt_c": 30.800245044943242,
+      "aqi": 25.333333333333332,
+      "aqi_category": "Good",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "OUTSIDE_SHIFT_WINDOW"
+      ],
+      "evidence_ids": []
+    },
+    {
+      "hour": "2025-05-31T04:00:00+05:30",
+      "status": "REST",
+      "wbgt_c": 30.477143492743412,
+      "aqi": 21.9,
+      "aqi_category": "Good",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "OUTSIDE_SHIFT_WINDOW"
+      ],
+      "evidence_ids": []
+    },
+    {
+      "hour": "2025-05-31T05:00:00+05:30",
+      "status": "REST",
+      "wbgt_c": 30.3290720553442,
+      "aqi": 19.7,
+      "aqi_category": "Good",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "OUTSIDE_SHIFT_WINDOW"
+      ],
+      "evidence_ids": []
+    },
+    {
+      "hour": "2025-05-31T06:00:00+05:30",
+      "status": "REDUCED",
+      "wbgt_c": 30.72896631696999,
+      "aqi": 21.3,
+      "aqi_category": "Good",
+      "risk_level": "HIGH",
+      "reasons": [
+        "HEAT_REDUCED_15_45"
+      ],
+      "evidence_ids": [
+        "ev-wbgt-0600",
+        "ev-aqi-0600"
+      ]
+    },
+    {
+      "hour": "2025-05-31T07:00:00+05:30",
+      "status": "REDUCED",
+      "wbgt_c": 31.537254160811646,
+      "aqi": 23.5,
+      "aqi_category": "Good",
+      "risk_level": "HIGH",
+      "reasons": [
+        "HEAT_REDUCED_15_45"
+      ],
+      "evidence_ids": [
+        "ev-wbgt-0700",
+        "ev-aqi-0700"
+      ]
+    },
+    {
+      "hour": "2025-05-31T08:00:00+05:30",
+      "status": "AVOID",
+      "wbgt_c": 33.25151528273303,
+      "aqi": 27.0,
+      "aqi_category": "Good",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "HEAT_WBGT_OVER_LIMIT"
+      ],
+      "evidence_ids": [
+        "ev-wbgt-0800",
+        "ev-aqi-0800"
+      ]
+    },
+    {
+      "hour": "2025-05-31T09:00:00+05:30",
+      "status": "AVOID",
+      "wbgt_c": 34.97819832533365,
+      "aqi": 32.6,
+      "aqi_category": "Good",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "HEAT_WBGT_OVER_LIMIT"
+      ],
+      "evidence_ids": [
+        "ev-wbgt-0900",
+        "ev-aqi-0900"
+      ]
+    },
+    {
+      "hour": "2025-05-31T10:00:00+05:30",
+      "status": "AVOID",
+      "wbgt_c": 35.98146562419644,
+      "aqi": 39.5,
+      "aqi_category": "Good",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "HEAT_WBGT_OVER_35"
+      ],
+      "evidence_ids": [
+        "ev-wbgt-1000",
+        "ev-aqi-1000"
+      ]
+    },
+    {
+      "hour": "2025-05-31T11:00:00+05:30",
+      "status": "AVOID",
+      "wbgt_c": 36.904158642574785,
+      "aqi": 44.6,
+      "aqi_category": "Good",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "HEAT_WBGT_OVER_35"
+      ],
+      "evidence_ids": [
+        "ev-wbgt-1100",
+        "ev-aqi-1100"
+      ]
+    },
+    {
+      "hour": "2025-05-31T12:00:00+05:30",
+      "status": "AVOID",
+      "wbgt_c": 37.767533518245855,
+      "aqi": 47.0,
+      "aqi_category": "Good",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "HEAT_WBGT_OVER_35"
+      ],
+      "evidence_ids": [
+        "ev-wbgt-1200",
+        "ev-aqi-1200"
+      ]
+    },
+    {
+      "hour": "2025-05-31T13:00:00+05:30",
+      "status": "AVOID",
+      "wbgt_c": 37.78387288711904,
+      "aqi": 48.5,
+      "aqi_category": "Good",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "HEAT_WBGT_OVER_35"
+      ],
+      "evidence_ids": [
+        "ev-wbgt-1300",
+        "ev-aqi-1300"
+      ]
+    },
+    {
+      "hour": "2025-05-31T14:00:00+05:30",
+      "status": "AVOID",
+      "wbgt_c": 36.354837132312255,
+      "aqi": 52.2,
+      "aqi_category": "Satisfactory",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "HEAT_WBGT_OVER_35"
+      ],
+      "evidence_ids": [
+        "ev-wbgt-1400",
+        "ev-aqi-1400"
+      ]
+    },
+    {
+      "hour": "2025-05-31T15:00:00+05:30",
+      "status": "AVOID",
+      "wbgt_c": 37.734830685578096,
+      "aqi": 49.1,
+      "aqi_category": "Good",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "HEAT_WBGT_OVER_35"
+      ],
+      "evidence_ids": [
+        "ev-wbgt-1500",
+        "ev-aqi-1500"
+      ]
+    },
+    {
+      "hour": "2025-05-31T16:00:00+05:30",
+      "status": "AVOID",
+      "wbgt_c": 38.57599537605783,
+      "aqi": 47.4,
+      "aqi_category": "Good",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "HEAT_WBGT_OVER_35"
+      ],
+      "evidence_ids": [
+        "ev-wbgt-1600",
+        "ev-aqi-1600"
+      ]
+    },
+    {
+      "hour": "2025-05-31T17:00:00+05:30",
+      "status": "AVOID",
+      "wbgt_c": 37.06700942491767,
+      "aqi": 500,
+      "aqi_category": "Severe",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "AIR_SEVERE_AVOID",
+        "HEAT_WBGT_OVER_35"
+      ],
+      "evidence_ids": [
+        "ev-wbgt-1700",
+        "ev-aqi-1700"
+      ]
+    },
+    {
+      "hour": "2025-05-31T18:00:00+05:30",
+      "status": "AVOID",
+      "wbgt_c": 35.373881565994914,
+      "aqi": 51.5,
+      "aqi_category": "Satisfactory",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "HEAT_WBGT_OVER_35"
+      ],
+      "evidence_ids": [
+        "ev-wbgt-1800",
+        "ev-aqi-1800"
+      ]
+    },
+    {
+      "hour": "2025-05-31T19:00:00+05:30",
+      "status": "AVOID",
+      "wbgt_c": 34.76103922666342,
+      "aqi": 55.224137931034484,
+      "aqi_category": "Satisfactory",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "HEAT_WBGT_OVER_LIMIT"
+      ],
+      "evidence_ids": [
+        "ev-wbgt-1900",
+        "ev-aqi-1900"
+      ]
+    },
+    {
+      "hour": "2025-05-31T20:00:00+05:30",
+      "status": "REST",
+      "wbgt_c": 34.6013994600717,
+      "aqi": 52.52068965517241,
+      "aqi_category": "Satisfactory",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "OUTSIDE_SHIFT_WINDOW"
+      ],
+      "evidence_ids": []
+    },
+    {
+      "hour": "2025-05-31T21:00:00+05:30",
+      "status": "REST",
+      "wbgt_c": 33.82911538185461,
+      "aqi": 500,
+      "aqi_category": "Severe",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "OUTSIDE_SHIFT_WINDOW"
+      ],
+      "evidence_ids": []
+    },
+    {
+      "hour": "2025-05-31T22:00:00+05:30",
+      "status": "REST",
+      "wbgt_c": 33.430244992973975,
+      "aqi": 500,
+      "aqi_category": "Severe",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "OUTSIDE_SHIFT_WINDOW"
+      ],
+      "evidence_ids": []
+    },
+    {
+      "hour": "2025-05-31T23:00:00+05:30",
+      "status": "REST",
+      "wbgt_c": 32.90373525448541,
+      "aqi": 51.16896551724138,
+      "aqi_category": "Satisfactory",
+      "risk_level": "EXTREME",
+      "reasons": [
+        "OUTSIDE_SHIFT_WINDOW"
+      ],
+      "evidence_ids": []
+    }
+  ],
+  "windows": [
+    {
+      "start": "2025-05-31T00:00:00+05:30",
+      "end": "2025-05-31T06:00:00+05:30",
+      "status": "REST",
+      "summary_code": "OUTSIDE_SHIFT_WINDOW"
+    },
+    {
+      "start": "2025-05-31T06:00:00+05:30",
+      "end": "2025-05-31T08:00:00+05:30",
+      "status": "REDUCED",
+      "summary_code": "HEAT_REDUCED_15_45"
+    },
+    {
+      "start": "2025-05-31T08:00:00+05:30",
+      "end": "2025-05-31T20:00:00+05:30",
+      "status": "AVOID",
+      "summary_code": "HEAT_WBGT_OVER_35"
+    },
+    {
+      "start": "2025-05-31T20:00:00+05:30",
+      "end": "2025-06-01T00:00:00+05:30",
+      "status": "REST",
+      "summary_code": "OUTSIDE_SHIFT_WINDOW"
+    }
+  ],
+  "dangerous_windows": [
+    {
+      "start": "2025-05-31T06:00:00+05:30",
+      "end": "2025-05-31T08:00:00+05:30",
+      "status": "REDUCED",
+      "summary_code": "HEAT_REDUCED_15_45"
+    },
+    {
+      "start": "2025-05-31T08:00:00+05:30",
+      "end": "2025-05-31T20:00:00+05:30",
+      "status": "AVOID",
+      "summary_code": "HEAT_WBGT_OVER_35"
+    }
+  ],
+  "recommended_blocks": [
+    {
+      "start": "2025-05-31T06:00:00+05:30",
+      "end": "2025-05-31T08:00:00+05:30",
+      "status": "REDUCED",
+      "summary_code": "HEAT_REDUCED_15_45"
+    }
+  ],
+  "no_safe_window": false,
+  "overall_risk": "EXTREME",
+  "hydration": {
+    "warning": true,
+    "text": "Drink ~250 ml every 15-20 minutes."
+  },
+  "mask": {
+    "needed": true,
+    "type": "N95/FFP2"
+  },
+  "seek_help_lines": [
+    "Stop work, move to shade, and call emergency services if you experience confusion, fainting, or stop sweating."
+  ],
+  "evidence": [
+    {
+      "id": "ev-wbgt-0000",
+      "label": "Heat Stress (WBGT)",
+      "value": "31.1",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "00:00"
+    },
+    {
+      "id": "ev-aqi-0000",
+      "label": "Air Quality (AQI)",
+      "value": "36",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "00:00"
+    },
+    {
+      "id": "ev-wbgt-0100",
+      "label": "Heat Stress (WBGT)",
+      "value": "31.0",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "01:00"
+    },
+    {
+      "id": "ev-aqi-0100",
+      "label": "Air Quality (AQI)",
+      "value": "34",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "01:00"
+    },
+    {
+      "id": "ev-wbgt-0200",
+      "label": "Heat Stress (WBGT)",
+      "value": "31.0",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "02:00"
+    },
+    {
+      "id": "ev-aqi-0200",
+      "label": "Air Quality (AQI)",
+      "value": "30",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "02:00"
+    },
+    {
+      "id": "ev-wbgt-0300",
+      "label": "Heat Stress (WBGT)",
+      "value": "30.8",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "03:00"
+    },
+    {
+      "id": "ev-aqi-0300",
+      "label": "Air Quality (AQI)",
+      "value": "25",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "03:00"
+    },
+    {
+      "id": "ev-wbgt-0400",
+      "label": "Heat Stress (WBGT)",
+      "value": "30.5",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "04:00"
+    },
+    {
+      "id": "ev-aqi-0400",
+      "label": "Air Quality (AQI)",
+      "value": "22",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "04:00"
+    },
+    {
+      "id": "ev-wbgt-0500",
+      "label": "Heat Stress (WBGT)",
+      "value": "30.3",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "05:00"
+    },
+    {
+      "id": "ev-aqi-0500",
+      "label": "Air Quality (AQI)",
+      "value": "20",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "05:00"
+    },
+    {
+      "id": "ev-wbgt-0600",
+      "label": "Heat Stress (WBGT)",
+      "value": "30.7",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "06:00"
+    },
+    {
+      "id": "ev-aqi-0600",
+      "label": "Air Quality (AQI)",
+      "value": "21",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "06:00"
+    },
+    {
+      "id": "ev-wbgt-0700",
+      "label": "Heat Stress (WBGT)",
+      "value": "31.5",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "07:00"
+    },
+    {
+      "id": "ev-aqi-0700",
+      "label": "Air Quality (AQI)",
+      "value": "24",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "07:00"
+    },
+    {
+      "id": "ev-wbgt-0800",
+      "label": "Heat Stress (WBGT)",
+      "value": "33.3",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "08:00"
+    },
+    {
+      "id": "ev-aqi-0800",
+      "label": "Air Quality (AQI)",
+      "value": "27",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "08:00"
+    },
+    {
+      "id": "ev-wbgt-0900",
+      "label": "Heat Stress (WBGT)",
+      "value": "35.0",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "09:00"
+    },
+    {
+      "id": "ev-aqi-0900",
+      "label": "Air Quality (AQI)",
+      "value": "33",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "09:00"
+    },
+    {
+      "id": "ev-wbgt-1000",
+      "label": "Heat Stress (WBGT)",
+      "value": "36.0",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "10:00"
+    },
+    {
+      "id": "ev-aqi-1000",
+      "label": "Air Quality (AQI)",
+      "value": "40",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "10:00"
+    },
+    {
+      "id": "ev-wbgt-1100",
+      "label": "Heat Stress (WBGT)",
+      "value": "36.9",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "11:00"
+    },
+    {
+      "id": "ev-aqi-1100",
+      "label": "Air Quality (AQI)",
+      "value": "45",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "11:00"
+    },
+    {
+      "id": "ev-wbgt-1200",
+      "label": "Heat Stress (WBGT)",
+      "value": "37.8",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "12:00"
+    },
+    {
+      "id": "ev-aqi-1200",
+      "label": "Air Quality (AQI)",
+      "value": "47",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "12:00"
+    },
+    {
+      "id": "ev-wbgt-1300",
+      "label": "Heat Stress (WBGT)",
+      "value": "37.8",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "13:00"
+    },
+    {
+      "id": "ev-aqi-1300",
+      "label": "Air Quality (AQI)",
+      "value": "48",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "13:00"
+    },
+    {
+      "id": "ev-wbgt-1400",
+      "label": "Heat Stress (WBGT)",
+      "value": "36.4",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "14:00"
+    },
+    {
+      "id": "ev-aqi-1400",
+      "label": "Air Quality (AQI)",
+      "value": "52",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "14:00"
+    },
+    {
+      "id": "ev-wbgt-1500",
+      "label": "Heat Stress (WBGT)",
+      "value": "37.7",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "15:00"
+    },
+    {
+      "id": "ev-aqi-1500",
+      "label": "Air Quality (AQI)",
+      "value": "49",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "15:00"
+    },
+    {
+      "id": "ev-wbgt-1600",
+      "label": "Heat Stress (WBGT)",
+      "value": "38.6",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "16:00"
+    },
+    {
+      "id": "ev-aqi-1600",
+      "label": "Air Quality (AQI)",
+      "value": "47",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "16:00"
+    },
+    {
+      "id": "ev-wbgt-1700",
+      "label": "Heat Stress (WBGT)",
+      "value": "37.1",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "17:00"
+    },
+    {
+      "id": "ev-aqi-1700",
+      "label": "Air Quality (AQI)",
+      "value": "500",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "17:00"
+    },
+    {
+      "id": "ev-wbgt-1800",
+      "label": "Heat Stress (WBGT)",
+      "value": "35.4",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "18:00"
+    },
+    {
+      "id": "ev-aqi-1800",
+      "label": "Air Quality (AQI)",
+      "value": "52",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "18:00"
+    },
+    {
+      "id": "ev-wbgt-1900",
+      "label": "Heat Stress (WBGT)",
+      "value": "34.8",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "19:00"
+    },
+    {
+      "id": "ev-aqi-1900",
+      "label": "Air Quality (AQI)",
+      "value": "55",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "19:00"
+    },
+    {
+      "id": "ev-wbgt-2000",
+      "label": "Heat Stress (WBGT)",
+      "value": "34.6",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "20:00"
+    },
+    {
+      "id": "ev-aqi-2000",
+      "label": "Air Quality (AQI)",
+      "value": "53",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "20:00"
+    },
+    {
+      "id": "ev-wbgt-2100",
+      "label": "Heat Stress (WBGT)",
+      "value": "33.8",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "21:00"
+    },
+    {
+      "id": "ev-aqi-2100",
+      "label": "Air Quality (AQI)",
+      "value": "500",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "21:00"
+    },
+    {
+      "id": "ev-wbgt-2200",
+      "label": "Heat Stress (WBGT)",
+      "value": "33.4",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "22:00"
+    },
+    {
+      "id": "ev-aqi-2200",
+      "label": "Air Quality (AQI)",
+      "value": "500",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "22:00"
+    },
+    {
+      "id": "ev-wbgt-2300",
+      "label": "Heat Stress (WBGT)",
+      "value": "32.9",
+      "unit": "\u00b0C",
+      "source": "Open-Meteo",
+      "hour_range": "23:00"
+    },
+    {
+      "id": "ev-aqi-2300",
+      "label": "Air Quality (AQI)",
+      "value": "51",
+      "unit": "Index",
+      "source": "Open-Meteo",
+      "hour_range": "23:00"
+    }
+  ],
+  "assumptions_version": "1.0",
+  "data_source": "replay",
+  "scenario_id": "chennai-humid-2025-05-31",
+  "recorded_date": "2025-05-31"
+}

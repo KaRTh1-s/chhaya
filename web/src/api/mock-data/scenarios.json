@@ -1,0 +1,34 @@
+[
+  {
+    "id": "delhi-heatwave-2025-06-09",
+    "label": "Delhi Heatwave (43.7\u00b0C recorded peak)",
+    "city_id": "delhi",
+    "date": "2025-06-09",
+    "max_temp_c": 43.7,
+    "max_pm2_5": 163.0
+  },
+  {
+    "id": "delhi-smog-2025-11-23",
+    "label": "Delhi Severe Winter Smog (AQI 400+)",
+    "city_id": "delhi",
+    "date": "2025-11-23",
+    "max_temp_c": 26.2,
+    "max_pm2_5": 380.0
+  },
+  {
+    "id": "chennai-humid-2025-05-31",
+    "label": "Chennai High Humidity Summer Day",
+    "city_id": "chennai",
+    "date": "2025-05-31",
+    "max_temp_c": 38.5,
+    "max_pm2_5": 42.0
+  },
+  {
+    "id": "coimbatore-mild-2025-01-15",
+    "label": "Coimbatore Mild Winter Day",
+    "city_id": "coimbatore",
+    "date": "2025-01-15",
+    "max_temp_c": 29.8,
+    "max_pm2_5": 28.0
+  }
+]

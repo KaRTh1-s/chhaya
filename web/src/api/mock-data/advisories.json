@@ -1,0 +1,98 @@
+{
+  "delhi-heatwave-2025-06-09": {
+    "en": {
+      "language": "en",
+      "sentences": [
+        {
+          "text": "Extreme heat stress is projected between 11:00 AM and 04:00 PM with WBGT peaking at 33.9\u00b0C.",
+          "evidence_ids": [
+            "ev_wbgt_peak_14",
+            "ev_temp_peak_14"
+          ]
+        },
+        {
+          "text": "Halt heavy physical work during 12:00 PM \u2013 03:00 PM; prioritize the early morning 06:00 AM \u2013 10:00 AM shift.",
+          "evidence_ids": [
+            "ev_window_avoid_12_15",
+            "ev_block_morning_safe"
+          ]
+        },
+        {
+          "text": "Drink at least 250ml water every 15\u201320 minutes and use shaded rest stations.",
+          "evidence_ids": [
+            "ev_hydration_caution"
+          ]
+        }
+      ],
+      "seek_help": [
+        "Dizziness, confusion, cessation of sweating or nausea requires immediate medical assistance.",
+        "Call 108 for ambulance assistance during acute heat emergency."
+      ],
+      "mode": "bedrock",
+      "validated": true,
+      "fallback_reason": null
+    },
+    "hi": {
+      "language": "hi",
+      "sentences": [
+        {
+          "text": "\u0926\u093f\u0932\u094d\u0932\u0940 \u092e\u0947\u0902 \u0938\u0941\u092c\u0939 11:00 \u0938\u0947 \u0936\u093e\u092e 04:00 \u092c\u091c\u0947 \u0915\u0947 \u092c\u0940\u091a \u0905\u0924\u094d\u092f\u0927\u093f\u0915 \u0917\u0930\u094d\u092e\u0940 \u0915\u093e \u0905\u0928\u0941\u092e\u093e\u0928 \u0939\u0948, \u091c\u0939\u093e\u0901 WBGT \u0924\u093e\u092a\u092e\u093e\u0928 33.9\u00b0C \u0924\u0915 \u092a\u0939\u0941\u0901\u091a\u0947\u0917\u093e\u0964",
+          "evidence_ids": [
+            "ev_wbgt_peak_14",
+            "ev_temp_peak_14"
+          ]
+        },
+        {
+          "text": "\u0926\u094b\u092a\u0939\u0930 12:00 \u0938\u0947 03:00 \u092c\u091c\u0947 \u0915\u0947 \u092c\u0940\u091a \u092d\u093e\u0930\u0940 \u0915\u093e\u092e \u0930\u094b\u0915\u0947\u0902 \u0914\u0930 \u0938\u0941\u092c\u0939 06:00 \u0938\u0947 10:00 \u092c\u091c\u0947 \u0915\u0947 \u0938\u0941\u0930\u0915\u094d\u0937\u093f\u0924 \u0938\u092e\u092f \u092e\u0947\u0902 \u0915\u093e\u092e \u092a\u0942\u0930\u093e \u0915\u0930\u0947\u0902\u0964",
+          "evidence_ids": [
+            "ev_window_avoid_12_15",
+            "ev_block_morning_safe"
+          ]
+        },
+        {
+          "text": "\u0939\u0930 15-20 \u092e\u093f\u0928\u091f \u092e\u0947\u0902 \u0915\u092e \u0938\u0947 \u0915\u092e 250 \u092e\u093f\u0932\u0940\u0932\u0940\u091f\u0930 \u092a\u093e\u0928\u0940 \u092f\u093e \u0913\u0906\u0930\u090f\u0938 \u0918\u094b\u0932 \u0905\u0935\u0936\u094d\u092f \u092a\u093f\u090f\u0902\u0964",
+          "evidence_ids": [
+            "ev_hydration_caution"
+          ]
+        }
+      ],
+      "seek_help": [
+        "\u091a\u0915\u094d\u0915\u0930 \u0906\u0928\u093e, \u092d\u094d\u0930\u092e \u092f\u093e \u092a\u0938\u0940\u0928\u093e \u092c\u0902\u0926 \u0939\u094b\u0928\u093e \u0917\u0902\u092d\u0940\u0930 \u0916\u0924\u0930\u0947 \u0915\u0947 \u0932\u0915\u094d\u0937\u0923 \u0939\u0948\u0902; \u0924\u0941\u0930\u0902\u0924 \u091b\u093e\u092f\u093e \u092e\u0947\u0902 \u091c\u093e\u090f\u0902 \u0914\u0930 108 \u092a\u0930 \u0915\u0949\u0932 \u0915\u0930\u0947\u0902\u0964"
+      ],
+      "mode": "bedrock",
+      "validated": true,
+      "fallback_reason": null
+    },
+    "ta": {
+      "language": "ta",
+      "sentences": [
+        {
+          "text": "\u0b9f\u0bc6\u0bb2\u0bcd\u0bb2\u0bbf\u0baf\u0bbf\u0bb2\u0bcd \u0b95\u0bbe\u0bb2\u0bc8 11:00 \u0bae\u0ba3\u0bbf \u0bae\u0bc1\u0ba4\u0bb2\u0bcd \u0bae\u0bbe\u0bb2\u0bc8 04:00 \u0bae\u0ba3\u0bbf \u0bb5\u0bb0\u0bc8 \u0b95\u0b9f\u0bc1\u0bae\u0bc8\u0baf\u0bbe\u0ba9 \u0bb5\u0bc6\u0baa\u0bcd\u0baa \u0b85\u0bb4\u0bc1\u0ba4\u0bcd\u0ba4\u0bae\u0bcd \u0b87\u0bb0\u0bc1\u0b95\u0bcd\u0b95\u0bc1\u0bae\u0bcd, WBGT 33.9\u00b0C \u0b90 \u0b8e\u0b9f\u0bcd\u0b9f\u0bc1\u0bae\u0bcd.",
+          "evidence_ids": [
+            "ev_wbgt_peak_14",
+            "ev_temp_peak_14"
+          ]
+        },
+        {
+          "text": "\u0bae\u0ba4\u0bbf\u0baf\u0bae\u0bcd 12:00 \u0bae\u0bc1\u0ba4\u0bb2\u0bcd 03:00 \u0bb5\u0bb0\u0bc8 \u0b95\u0b9f\u0bc1\u0bae\u0bc8\u0baf\u0bbe\u0ba9 \u0bb5\u0bc6\u0bb3\u0bbf\u0baa\u0bcd\u0baa\u0bc1\u0bb1\u0baa\u0bcd \u0baa\u0ba3\u0bbf\u0b95\u0bb3\u0bc8\u0ba4\u0bcd \u0ba4\u0bb5\u0bbf\u0bb0\u0bcd\u0ba4\u0bcd\u0ba4\u0bc1, \u0b95\u0bbe\u0bb2\u0bc8 06:00 \u0bae\u0bc1\u0ba4\u0bb2\u0bcd 10:00 \u0bae\u0ba3\u0bbf \u0bb5\u0bb0\u0bc8 \u0bb5\u0bc7\u0bb2\u0bc8 \u0b9a\u0bc6\u0baf\u0bcd\u0baf\u0bb5\u0bc1\u0bae\u0bcd.",
+          "evidence_ids": [
+            "ev_window_avoid_12_15",
+            "ev_block_morning_safe"
+          ]
+        },
+        {
+          "text": "\u0b92\u0bb5\u0bcd\u0bb5\u0bca\u0bb0\u0bc1 15-20 \u0ba8\u0bbf\u0bae\u0bbf\u0b9f\u0b99\u0bcd\u0b95\u0bb3\u0bc1\u0b95\u0bcd\u0b95\u0bc1\u0bae\u0bcd \u0b95\u0bc1\u0bb1\u0bc8\u0ba8\u0bcd\u0ba4\u0ba4\u0bc1 250 \u0bae\u0bbf.\u0bb2\u0bbf \u0ba4\u0ba3\u0bcd\u0ba3\u0bc0\u0bb0\u0bcd \u0b85\u0bb2\u0bcd\u0bb2\u0ba4\u0bc1 ORS \u0b95\u0bc1\u0b9f\u0bbf\u0b95\u0bcd\u0b95\u0bb5\u0bc1\u0bae\u0bcd.",
+          "evidence_ids": [
+            "ev_hydration_caution"
+          ]
+        }
+      ],
+      "seek_help": [
+        "\u0bae\u0baf\u0b95\u0bcd\u0b95\u0bae\u0bcd, \u0b95\u0bc1\u0bb4\u0baa\u0bcd\u0baa\u0bae\u0bcd \u0b85\u0bb2\u0bcd\u0bb2\u0ba4\u0bc1 \u0bb5\u0bbf\u0baf\u0bb0\u0bcd\u0bb5\u0bc8 \u0ba8\u0bbf\u0bb1\u0bcd\u0b95\u0bbe\u0ba4 \u0ba8\u0bbf\u0bb2\u0bc8 \u0b8f\u0bb1\u0bcd\u0baa\u0b9f\u0bcd\u0b9f\u0bbe\u0bb2\u0bcd \u0b89\u0b9f\u0ba9\u0bc7 \u0ba8\u0bbf\u0bb4\u0bb2\u0bbf\u0bb2\u0bcd \u0b85\u0bae\u0bb0\u0bcd\u0ba8\u0bcd\u0ba4\u0bc1 108 \u0b85\u0bb5\u0b9a\u0bb0 \u0b89\u0ba4\u0bb5\u0bbf\u0b95\u0bcd\u0b95\u0bc1 \u0b85\u0bb4\u0bc8\u0b95\u0bcd\u0b95\u0bb5\u0bc1\u0bae\u0bcd."
+      ],
+      "mode": "bedrock",
+      "validated": true,
+      "fallback_reason": null
+    }
+  }
+}

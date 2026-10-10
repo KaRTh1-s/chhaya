@@ -1,0 +1,71 @@
+{
+  "updated_at": "2026-10-10T09:00:00+05:30",
+  "mode": "replay",
+  "cities": [
+    {
+      "city_id": "delhi",
+      "city_name": "Delhi",
+      "current_risk": "EXTREME",
+      "current_temp_c": 41.2,
+      "current_wbgt_c": 32.8,
+      "current_aqi": 185,
+      "peak_12h_risk": "EXTREME",
+      "peak_12h_wbgt_c": 33.9,
+      "dominant_factor": "HEAT",
+      "active_crews": 6,
+      "status": "DANGER"
+    },
+    {
+      "city_id": "mumbai",
+      "city_name": "Mumbai",
+      "current_risk": "HIGH",
+      "current_temp_c": 34.0,
+      "current_wbgt_c": 30.8,
+      "current_aqi": 110,
+      "peak_12h_risk": "HIGH",
+      "peak_12h_wbgt_c": 31.5,
+      "dominant_factor": "HUMIDITY",
+      "active_crews": 4,
+      "status": "CAUTION"
+    },
+    {
+      "city_id": "chennai",
+      "city_name": "Chennai",
+      "current_risk": "HIGH",
+      "current_temp_c": 36.2,
+      "current_wbgt_c": 31.6,
+      "current_aqi": 75,
+      "peak_12h_risk": "HIGH",
+      "peak_12h_wbgt_c": 32.2,
+      "dominant_factor": "HEAT_HUMIDITY",
+      "active_crews": 3,
+      "status": "CAUTION"
+    },
+    {
+      "city_id": "coimbatore",
+      "city_name": "Coimbatore",
+      "current_risk": "LOW",
+      "current_temp_c": 28.4,
+      "current_wbgt_c": 24.1,
+      "current_aqi": 42,
+      "peak_12h_risk": "MODERATE",
+      "peak_12h_wbgt_c": 26.5,
+      "dominant_factor": "NONE",
+      "active_crews": 2,
+      "status": "SAFE"
+    },
+    {
+      "city_id": "kolkata",
+      "city_name": "Kolkata",
+      "current_risk": "HIGH",
+      "current_temp_c": 35.8,
+      "current_wbgt_c": 31.2,
+      "current_aqi": 140,
+      "peak_12h_risk": "EXTREME",
+      "peak_12h_wbgt_c": 32.9,
+      "dominant_factor": "HEAT_HUMIDITY",
+      "active_crews": 3,
+      "status": "DANGER"
+    }
+  ]
+}
