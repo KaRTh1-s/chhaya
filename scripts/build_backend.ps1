@@ -19,6 +19,7 @@ New-Item -ItemType Directory -Path $BuildDir | Out-Null
 Copy-Item (Join-Path $BackendDir "handlers\api.py") (Join-Path $BuildDir "api.py")
 Copy-Item -Recurse (Join-Path $BackendDir "src\chhaya_backend") (Join-Path $BuildDir "chhaya_backend")
 Copy-Item -Recurse (Join-Path $EngineDir "src\chhaya_engine") (Join-Path $BuildDir "chhaya_engine")
+Copy-Item -Recurse (Join-Path $EngineDir "tests\fixtures") (Join-Path $BuildDir "tests\fixtures")
 
 # 2. Package AdvisorFunction (Dedicated Bedrock & Agent function)
 Write-Host "Assembling AdvisorFunction at $BuildAdvisorDir..." -ForegroundColor Cyan
@@ -30,6 +31,7 @@ New-Item -ItemType Directory -Path $BuildAdvisorDir | Out-Null
 Copy-Item (Join-Path $BackendDir "handlers\advisor.py") (Join-Path $BuildAdvisorDir "advisor.py")
 Copy-Item -Recurse (Join-Path $BackendDir "src\chhaya_backend") (Join-Path $BuildAdvisorDir "chhaya_backend")
 Copy-Item -Recurse (Join-Path $EngineDir "src\chhaya_engine") (Join-Path $BuildAdvisorDir "chhaya_engine")
+Copy-Item -Recurse (Join-Path $EngineDir "tests\fixtures") (Join-Path $BuildAdvisorDir "tests\fixtures")
 
 Write-Host "Build complete! Both Lambda packages assembled successfully." -ForegroundColor Green
 

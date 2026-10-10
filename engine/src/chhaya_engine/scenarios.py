@@ -82,12 +82,13 @@ def get_scenario(scenario_id: str) -> Scenario | None:
     return None
 
 def load_scenario_readings(scenario: Scenario) -> list[HourlyReading]:
-    path = FIXTURES_DIR / scenario.fixture_filename
-    if not path.exists():
-        # Fallback for alternative working directories
-        path = Path("engine/tests/fixtures") / scenario.fixture_filename
-        if not path.exists():
-            path = Path("tests/fixtures") / scenario.fixture_filename
+    candidates = [
+        Path(__file__).resolve().parent / "fixtures" / scenario.fixture_filename,
+        FIXTURES_DIR / scenario.fixture_filename,
+        Path("tests/fixtures") / scenario.fixture_filename,
+        Path("engine/tests/fixtures") / scenario.fixture_filename,
+    ]
+    path = next((p for p in candidates if p.exists()), candidates[0])
 
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)

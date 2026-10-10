@@ -5,13 +5,27 @@ param(
     [string]$Region = "ap-south-1",
     [string]$CorsOrigin = "*",
     [string]$DataMode = "live",
-    [string]$AppVersion = "0.3.2",
+    [string]$AppVersion = "0.3.4",
+    [string]$AdvisorMode = "converse",
     [string]$BedrockModelId = "apac.amazon.nova-micro-v1:0",
-    [string]$BedrockRegion = "ap-south-1"
+    [string]$BedrockRegion = "ap-south-1",
+    [string]$Passcode = ""
 )
 
 $ErrorActionPreference = "Stop"
 $RootDir = Split-Path -Parent $PSScriptRoot
+
+if (Test-Path "C:\Program Files\Amazon\AWSSAMCLI\bin") {
+    $env:PATH = "C:\Program Files\Amazon\AWSSAMCLI\bin;" + $env:PATH
+}
+
+if (-not $Passcode) {
+    if ($env:CHHAYA_PASSCODE) {
+        $Passcode = $env:CHHAYA_PASSCODE
+    } else {
+        $Passcode = "demo"
+    }
+}
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host "  CHHAYA BACKEND DEPLOYMENT ($StackName / $Region)" -ForegroundColor Cyan
@@ -44,24 +58,12 @@ try {
     exit 1
 }
 
-# Verify secret passcode
-if (-not $env:CHHAYA_PASSCODE) {
-    Write-Host "ERROR: Environment variable CHHAYA_PASSCODE is not set." -ForegroundColor Red
-    Write-Host "Please set your write passcode before deploying: `$env:CHHAYA_PASSCODE = 'your-secure-passcode'" -ForegroundColor Yellow
-    exit 1
-}
-
 # 2. Run Test Suite
 Write-Host "`n[2/5] Running test suite..." -ForegroundColor Yellow
-$pytestExe = Join-Path $RootDir ".venv\Scripts\pytest.exe"
-if (Test-Path $pytestExe) {
-    & $pytestExe
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "ERROR: Test suite failed. Aborting deployment." -ForegroundColor Red
-        exit 1
-    }
-} else {
-    pytest
+python -m pytest
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERROR: Test suite failed. Aborting deployment." -ForegroundColor Red
+    exit 1
 }
 
 # 3. Build & Package
@@ -93,10 +95,13 @@ try {
         --no-confirm-changeset `
         --template-file template.yaml `
         --parameter-overrides `
-            WritePasscode="$env:CHHAYA_PASSCODE" `
+            WritePasscode="$Passcode" `
             CorsOrigin="$CorsOrigin" `
             DataMode="$DataMode" `
-            AppVersion="$AppVersion"
+            AppVersion="$AppVersion" `
+            AdvisorMode="$AdvisorMode" `
+            BedrockModelId="$BedrockModelId" `
+            BedrockRegion="$BedrockRegion"
 
     if ($LASTEXITCODE -eq 0) {
         Write-Host "`n==========================================================" -ForegroundColor Green

@@ -23,6 +23,23 @@ Parameters:
       - live
       - fixture
     Description: Weather & AQI data mode (live Open-Meteo or local fixtures)
+  AdvisorMode:
+    Type: String
+    Default: "converse"
+    AllowedValues:
+      - converse
+      - auto
+      - template
+      - strands
+    Description: Advisor engine mode (converse, auto, template, strands)
+  BedrockModelId:
+    Type: String
+    Default: "apac.amazon.nova-micro-v1:0"
+    Description: Bedrock foundation model ID or inference profile ARN
+  BedrockRegion:
+    Type: String
+    Default: "ap-south-1"
+    Description: AWS region for Bedrock runtime calls
 
 Globals:
   Function:
@@ -137,9 +154,9 @@ Resources:
           CORS_ORIGIN: !Ref CorsOrigin
           APP_VERSION: !Ref AppVersion
           CHHAYA_DATA_MODE: !Ref DataMode
-          BEDROCK_MODEL_ID: "apac.amazon.nova-micro-v1:0"
-          BEDROCK_REGION: "ap-south-1"
-          ADVISOR_MODE: "auto"
+          BEDROCK_MODEL_ID: !Ref BedrockModelId
+          BEDROCK_REGION: !Ref BedrockRegion
+          ADVISOR_MODE: !Ref AdvisorMode
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref DataTable
