@@ -8,3 +8,4 @@ dist/
 build/
 .env
 .aws-sam/
+*.egg-info/
