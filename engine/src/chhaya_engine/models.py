@@ -1,7 +1,7 @@
-from dataclasses import dataclass, asdict, field
-from enum import Enum
-from typing import List, Optional
+from dataclasses import asdict, dataclass
 from datetime import datetime
+from enum import Enum
+
 
 class JobType(str, Enum):
     RIDER = "RIDER"
@@ -39,8 +39,8 @@ class HourlyReading:
     rh_pct: float
     shortwave_wm2: float
     wind_ms: float
-    pm2_5: Optional[float] = None
-    pm10: Optional[float] = None
+    pm2_5: float | None = None
+    pm10: float | None = None
 
     def to_dict(self):
         return {
@@ -89,11 +89,11 @@ class HourPlan:
     hour: datetime
     status: HourStatus
     wbgt_c: float
-    aqi: Optional[float]
-    aqi_category: Optional[str]
+    aqi: float | None
+    aqi_category: str | None
     risk_level: RiskLevel
-    reasons: List[str]
-    evidence_ids: List[str]
+    reasons: list[str]
+    evidence_ids: list[str]
 
     def to_dict(self):
         d = asdict(self)
@@ -120,14 +120,16 @@ class Window:
 class DayPlan:
     city_label: str
     generated_at: datetime
-    hours: List[HourPlan]
-    windows: List[Window]
-    dangerous_windows: List[Window]
+    hours: list[HourPlan]
+    windows: list[Window]
+    dangerous_windows: list[Window]
+    recommended_blocks: list[Window]
+    no_safe_window: bool
     overall_risk: RiskLevel
     hydration: dict
     mask: dict
-    seek_help_lines: List[str]
-    evidence: List[EvidenceCard]
+    seek_help_lines: list[str]
+    evidence: list[EvidenceCard]
     assumptions_version: str
 
     def to_dict(self):
@@ -137,6 +139,8 @@ class DayPlan:
             "hours": [h.to_dict() for h in self.hours],
             "windows": [w.to_dict() for w in self.windows],
             "dangerous_windows": [w.to_dict() for w in self.dangerous_windows],
+            "recommended_blocks": [w.to_dict() for w in self.recommended_blocks],
+            "no_safe_window": self.no_safe_window,
             "overall_risk": self.overall_risk.value,
             "hydration": self.hydration,
             "mask": self.mask,
@@ -147,8 +151,8 @@ class DayPlan:
 
 def create_worker_profile(
     job_type: JobType,
-    workload: Optional[Workload] = None,
-    sun_exposure: Optional[SunExposure] = None,
+    workload: Workload | None = None,
+    sun_exposure: SunExposure | None = None,
     preferred_start_hour: int = 6,
     preferred_end_hour: int = 20,
     max_shift_hours: int = 8

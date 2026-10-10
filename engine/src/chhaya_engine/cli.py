@@ -1,11 +1,19 @@
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from chhaya_engine.cities import get_city
-from chhaya_engine.models import JobType, Workload, SunExposure, create_worker_profile, HourlyReading
-from chhaya_engine.planner import plan_day
 from chhaya_engine.clients.openmeteo import OpenMeteoClient
+from chhaya_engine.models import (
+    HourlyReading,
+    JobType,
+    SunExposure,
+    Workload,
+    create_worker_profile,
+)
+from chhaya_engine.planner import plan_day
+
 
 def main():
     parser = argparse.ArgumentParser(description="Chhaya Engine CLI")
@@ -25,24 +33,26 @@ def main():
         
     profile = create_worker_profile(args.job, args.workload, args.sun)
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if args.now:
-        now = datetime.fromisoformat(args.now.replace('Z', '+00:00'))
+        now = datetime.fromisoformat(args.now)
 
     readings = []
     if args.fixture:
-        with open(args.fixture, "r") as f:
+        with open(args.fixture, "r", encoding="utf-8") as f:
             data = json.load(f)
-            for d in data:
-                readings.append(HourlyReading(
-                    time=datetime.fromisoformat(d["time"]),
-                    temp_c=d["temp_c"],
-                    rh_pct=d["rh_pct"],
-                    shortwave_wm2=d["shortwave_wm2"],
-                    wind_ms=d["wind_ms"],
-                    pm2_5=d.get("pm2_5"),
-                    pm10=d.get("pm10")
-                ))
+            raw_list = data.get("readings", data) if isinstance(data, dict) else data
+            for d in raw_list:
+                if isinstance(d, dict) and "temp_c" in d:
+                    readings.append(HourlyReading(
+                        time=datetime.fromisoformat(d["time"]),
+                        temp_c=d["temp_c"],
+                        rh_pct=d["rh_pct"],
+                        shortwave_wm2=d["shortwave_wm2"],
+                        wind_ms=d["wind_ms"],
+                        pm2_5=d.get("pm2_5"),
+                        pm10=d.get("pm10")
+                    ))
     else:
         client = OpenMeteoClient()
         readings = client.fetch_forecast(city.lat, city.lon)
@@ -68,9 +78,14 @@ def main():
         print(f"  {w.start.strftime('%H:%M')}-{w.end.strftime('%H:%M')} : {w.status.value} ({w.summary_code})")
         
     print("\nRecommendations:")
-    print(f"  Hydration: {plan.hydration['text']}")
-    print(f"  Mask:      {plan.mask['type']}")
-    print(f"  Evidence:  {len(plan.evidence)} cards generated")
+    if plan.no_safe_window:
+        print("  Shift Guidance: No safe window today: reschedule")
+    else:
+        blocks_str = ", ".join(f"{b.start.strftime('%H:%M')}-{b.end.strftime('%H:%M')} [{b.status.value}]" for b in plan.recommended_blocks)
+        print(f"  Best blocks:    {blocks_str}")
+    print(f"  Hydration:      {plan.hydration['text']}")
+    print(f"  Mask:           {plan.mask['type']}")
+    print(f"  Evidence:       {len(plan.evidence)} cards generated")
 
 if __name__ == "__main__":
     main()

@@ -1,11 +1,12 @@
-import pytest
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from chhaya_engine.aqi import calculate_aqi, get_aqi_category, get_effective_exposure_index
 from chhaya_engine.models import HourlyReading, Workload
 
+
 def test_calculate_aqi_pm25():
     # PM2.5 = 45 -> AQI ~75 Satisfactory
-    dt = datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc)
+    dt = datetime(2026, 5, 1, 12, 0, tzinfo=UTC)
     r = HourlyReading(dt, 30, 50, 0, 0, pm2_5=45.0, pm10=None)
     aqi = calculate_aqi(r)
     assert abs(aqi - 75.0) < 1.0
@@ -18,7 +19,7 @@ def test_calculate_aqi_pm25():
     assert get_aqi_category(aqi2) == "Poor"
 
 def test_calculate_aqi_pm10():
-    dt = datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc)
+    dt = datetime(2026, 5, 1, 12, 0, tzinfo=UTC)
     r = HourlyReading(dt, 30, 50, 0, 0, pm2_5=None, pm10=75.0)
     aqi = calculate_aqi(r)
     # 51-100 -> 51-100
@@ -26,19 +27,19 @@ def test_calculate_aqi_pm10():
     assert get_aqi_category(aqi) == "Satisfactory"
 
 def test_calculate_aqi_max():
-    dt = datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc)
+    dt = datetime(2026, 5, 1, 12, 0, tzinfo=UTC)
     r = HourlyReading(dt, 30, 50, 0, 0, pm2_5=100.0, pm10=50.0) # PM2.5=232, PM10=50
     aqi = calculate_aqi(r)
     assert abs(aqi - 231.7) < 1.0
 
 def test_calculate_aqi_none():
-    dt = datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc)
+    dt = datetime(2026, 5, 1, 12, 0, tzinfo=UTC)
     r = HourlyReading(dt, 30, 50, 0, 0, pm2_5=None, pm10=None)
     aqi = calculate_aqi(r)
     assert aqi is None
 
 def test_calculate_aqi_clamp():
-    dt = datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc)
+    dt = datetime(2026, 5, 1, 12, 0, tzinfo=UTC)
     r = HourlyReading(dt, 30, 50, 0, 0, pm2_5=1000.0, pm10=None)
     aqi = calculate_aqi(r)
     assert aqi == 500.0

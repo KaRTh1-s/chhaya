@@ -1,5 +1,5 @@
-import pytest
-from chhaya_engine.cities import get_city, CITIES
+from chhaya_engine.cities import get_city
+
 
 def test_get_city():
     city = get_city("delhi")

@@ -1,4 +1,5 @@
 import math
+
 from chhaya_engine.models import HourlyReading, SunExposure
 
 SOLAR_ADJ_C_PER_KW_M2 = 3.0

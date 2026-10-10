@@ -1,4 +1,3 @@
-from typing import Optional, Tuple
 from chhaya_engine.models import HourlyReading, Workload
 
 # CPCB AQI Breakpoints (µg/m³ -> AQI Index)
@@ -39,7 +38,7 @@ def _calc_subindex(conc: float, breakpoints: list[tuple[float, float, int, int]]
     return breakpoints[-1][3]
 
 
-def calculate_aqi(reading: HourlyReading) -> Optional[float]:
+def calculate_aqi(reading: HourlyReading) -> float | None:
     subindices = []
     if reading.pm2_5 is not None:
         subindices.append(_calc_subindex(reading.pm2_5, PM25_BREAKPOINTS))

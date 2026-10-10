@@ -1,27 +1,50 @@
-from typing import List, Tuple
-from datetime import datetime
-from chhaya_engine.models import (
-    HourlyReading, WorkerProfile, HourPlan, Window, DayPlan, 
-    HourStatus, RiskLevel, EvidenceCard, Workload, JobType
-)
-from chhaya_engine.heat import calculate_wbgt
+from collections import Counter
+from datetime import datetime, timedelta
+
 from chhaya_engine.aqi import calculate_aqi, get_aqi_category
+from chhaya_engine.heat import calculate_wbgt
+from chhaya_engine.models import (
+    DayPlan,
+    EvidenceCard,
+    HourlyReading,
+    HourPlan,
+    HourStatus,
+    RiskLevel,
+    Window,
+    WorkerProfile,
+    Workload,
+)
 from chhaya_engine.thresholds import WBGT_LIMITS
 
-def get_base_heat_status(wbgt: float, limit: float) -> Tuple[HourStatus, List[str]]:
+REASON_SEVERITY = {
+    "HEAT_WBGT_OVER_35": 100,
+    "AIR_SEVERE_AVOID": 100,
+    "HEAT_WBGT_OVER_LIMIT": 90,
+    "AIR_VERY_POOR_ESCALATE": 80,
+    "HEAT_REDUCED_15_45": 70,
+    "HEAT_REDUCED_30_30": 60,
+    "HEAT_REDUCED_45_15": 50,
+    "AIR_POOR_HEAVY_ESCALATE": 40,
+    "AIR_POOR_MASK": 30,
+    "HEAT_CAUTION": 20,
+    "HEAT_SAFE": 10,
+    "OUTSIDE_SHIFT_WINDOW": 0,
+}
+
+def get_base_heat_status(wbgt: float, limit: float) -> tuple[HourStatus, list[str]]:
     if wbgt >= 35.0:
         return HourStatus.AVOID, ["HEAT_WBGT_OVER_35"]
     
-    delta = wbgt - limit
-    if delta <= -2:
+    delta = round(wbgt - limit, 4)
+    if delta <= -2.0:
         return HourStatus.WORK, ["HEAT_SAFE"]
-    elif delta <= 0:
+    elif delta <= 0.0:
         return HourStatus.CAUTION, ["HEAT_CAUTION"]
-    elif delta <= 2:
+    elif delta <= 2.0:
         return HourStatus.REDUCED, ["HEAT_REDUCED_45_15"]
-    elif delta <= 4:
+    elif delta <= 4.0:
         return HourStatus.REDUCED, ["HEAT_REDUCED_30_30"]
-    elif delta <= 6:
+    elif delta <= 6.0:
         return HourStatus.REDUCED, ["HEAT_REDUCED_15_45"]
     else:
         return HourStatus.AVOID, ["HEAT_WBGT_OVER_LIMIT"]
@@ -38,7 +61,119 @@ def get_risk_level(status: HourStatus) -> RiskLevel:
     if status == HourStatus.REDUCED: return RiskLevel.HIGH
     return RiskLevel.EXTREME
 
-def plan_day(readings: List[HourlyReading], profile: WorkerProfile, city_label: str, now: datetime) -> DayPlan:
+def get_dominant_reason(hours_in_block: list[HourPlan]) -> str:
+    if not hours_in_block:
+        return "OUTSIDE_SHIFT_WINDOW"
+    
+    all_reasons = []
+    for h in hours_in_block:
+        all_reasons.extend(h.reasons)
+        
+    non_safe = [r for r in all_reasons if r not in ("HEAT_SAFE", "OUTSIDE_SHIFT_WINDOW")]
+    if not non_safe:
+        return all_reasons[0] if all_reasons else "HEAT_SAFE"
+        
+    max_sev = max(REASON_SEVERITY.get(r, 0) for r in non_safe)
+    candidates = [r for r in non_safe if REASON_SEVERITY.get(r, 0) == max_sev]
+    
+    # Ties -> most frequent in the block
+    counts = Counter(candidates)
+    most_common_code = max(candidates, key=lambda k: (counts[k], REASON_SEVERITY.get(k, 0)))
+    return most_common_code
+
+def compute_recommended_blocks(hours: list[HourPlan], profile: WorkerProfile) -> tuple[list[Window], bool]:
+    shift_hours = [
+        h for h in hours 
+        if profile.preferred_start_hour <= h.hour.hour < profile.preferred_end_hour
+    ]
+    
+    non_avoid_hours = [h for h in shift_hours if h.status != HourStatus.AVOID]
+    if not non_avoid_hours:
+        return [], True
+
+    # Identify contiguous runs of non-AVOID hours
+    runs: list[list[HourPlan]] = []
+    current_run: list[HourPlan] = []
+    for h in shift_hours:
+        if h.status != HourStatus.AVOID:
+            current_run.append(h)
+        else:
+            if current_run:
+                runs.append(current_run)
+                current_run = []
+    if current_run:
+        runs.append(current_run)
+
+    if not runs:
+        return [], True
+
+    def hour_cost(h: HourPlan) -> float:
+        if h.status == HourStatus.WORK: return 1.0
+        if h.status == HourStatus.CAUTION: return 2.0
+        if "HEAT_REDUCED_45_15" in h.reasons: return 3.0
+        if "HEAT_REDUCED_30_30" in h.reasons: return 4.0
+        if "HEAT_REDUCED_15_45" in h.reasons: return 5.0
+        if h.status == HourStatus.REDUCED: return 3.5
+        return 100.0
+
+    # Find up to 2 contiguous blocks minimizing total cost
+    best_blocks: list[list[HourPlan]] = []
+    
+    total_non_avoid = sum(len(r) for r in runs)
+    if total_non_avoid <= profile.max_shift_hours and len(runs) <= 2:
+        best_blocks = runs
+    else:
+        # Search candidate combinations of 1 or 2 sub-blocks
+        all_subsegments: list[list[HourPlan]] = []
+        for r in runs:
+            for i in range(len(r)):
+                for j in range(i + 1, min(i + profile.max_shift_hours + 1, len(r) + 1)):
+                    all_subsegments.append(r[i:j])
+        
+        best_combo: tuple[list[HourPlan], ...] | None = None
+        best_score = float('inf')
+        
+        # Check single subsegments
+        for s1 in all_subsegments:
+            dur = len(s1)
+            if dur <= profile.max_shift_hours:
+                cost = sum(hour_cost(h) for h in s1)
+                # We want maximum duration up to max_shift_hours, then lowest cost
+                score = -dur * 1000 + cost
+                if score < best_score:
+                    best_score = score
+                    best_combo = (s1,)
+        
+        # Check 2 distinct subsegments from different runs
+        for i, s1 in enumerate(all_subsegments):
+            for s2 in all_subsegments[i+1:]:
+                # Disjoint check: s1 and s2 must not overlap and be ordered
+                if s1[-1].hour < s2[0].hour:
+                    dur = len(s1) + len(s2)
+                    if dur <= profile.max_shift_hours:
+                        cost = sum(hour_cost(h) for h in s1) + sum(hour_cost(h) for h in s2)
+                        score = -dur * 1000 + cost
+                        if score < best_score:
+                            best_score = score
+                            best_combo = (s1, s2)
+
+        best_blocks = list(best_combo) if best_combo else [runs[0][:profile.max_shift_hours]]
+
+    windows: list[Window] = []
+    for b in best_blocks:
+        if not b: continue
+        start_time = b[0].hour
+        end_time = b[-1].hour + timedelta(hours=1)
+        dom_reason = get_dominant_reason(b)
+        
+        # Dominant status
+        status_counts = Counter(h.status for h in b)
+        dom_status = max(status_counts.keys(), key=lambda s: (status_counts[s], get_risk_level(s).value))
+        windows.append(Window(start_time, end_time, dom_status, dom_reason))
+
+    return windows, False
+
+def plan_day(readings: list[HourlyReading], profile: WorkerProfile, city_label: str, now: datetime) -> DayPlan:
     hours = []
     evidence = []
     limit = WBGT_LIMITS[profile.workload]
@@ -46,10 +181,6 @@ def plan_day(readings: List[HourlyReading], profile: WorkerProfile, city_label: 
     mask_needed = False
     needs_hydration_warning = False
 
-    # Extract valid shift hours prioritizing best blocks - a simplification: just take max_shift_hours of best hours inside window.
-    # To do this optimally: find contiguous block or just take hours in window. 
-    # For now, simply filter by preferred_start/end and if > max_shift_hours, take the lowest risk ones.
-    
     for r in readings:
         ev_ids = []
         hour_str = r.time.strftime("%H%M")
@@ -76,17 +207,18 @@ def plan_day(readings: List[HourlyReading], profile: WorkerProfile, city_label: 
         if aqi is not None:
             if aqi >= 401 and profile.workload in [Workload.MODERATE, Workload.HEAVY]:
                 status = HourStatus.AVOID
-                reasons.append("AIR_SEVERE_AVOID")
+                reasons = ["AIR_SEVERE_AVOID"] + [x for x in reasons if x != "HEAT_SAFE"]
                 mask_needed = True
             elif aqi >= 301:
                 status = escalate_status(status)
-                reasons.append("AIR_VERY_POOR_ESCALATE")
+                reasons = ["AIR_VERY_POOR_ESCALATE"] + [x for x in reasons if x != "HEAT_SAFE"]
                 mask_needed = True
             elif aqi >= 201:
                 if profile.workload == Workload.HEAVY:
                     status = escalate_status(status)
-                    reasons.append("AIR_POOR_HEAVY_ESCALATE")
-                reasons.append("AIR_POOR_MASK")
+                    reasons = ["AIR_POOR_HEAVY_ESCALATE"] + [x for x in reasons if x != "HEAT_SAFE"]
+                else:
+                    reasons.append("AIR_POOR_MASK")
                 mask_needed = True
 
         # Window constraints
@@ -116,14 +248,26 @@ def plan_day(readings: List[HourlyReading], profile: WorkerProfile, city_label: 
     if hours:
         curr_start = hours[0].hour
         curr_status = hours[0].status
-        curr_reasons = hours[0].reasons
+        curr_block = [hours[0]]
         for i in range(1, len(hours)):
             if hours[i].status != curr_status:
-                windows.append(Window(curr_start, hours[i].hour, curr_status, curr_reasons[0] if curr_reasons else ""))
+                windows.append(Window(
+                    curr_start, 
+                    hours[i].hour, 
+                    curr_status, 
+                    get_dominant_reason(curr_block)
+                ))
                 curr_start = hours[i].hour
                 curr_status = hours[i].status
-                curr_reasons = hours[i].reasons
-        windows.append(Window(curr_start, hours[-1].hour, curr_status, curr_reasons[0] if curr_reasons else ""))
+                curr_block = [hours[i]]
+            else:
+                curr_block.append(hours[i])
+        windows.append(Window(
+            curr_start, 
+            hours[-1].hour + timedelta(hours=1), 
+            curr_status, 
+            get_dominant_reason(curr_block)
+        ))
 
     dangerous = [w for w in windows if w.status == HourStatus.AVOID or "HEAT_REDUCED_15_45" in w.summary_code]
     
@@ -131,6 +275,8 @@ def plan_day(readings: List[HourlyReading], profile: WorkerProfile, city_label: 
     if any(h.risk_level == RiskLevel.EXTREME for h in hours): overall_risk = RiskLevel.EXTREME
     elif any(h.risk_level == RiskLevel.HIGH for h in hours): overall_risk = RiskLevel.HIGH
     elif any(h.risk_level == RiskLevel.MODERATE for h in hours): overall_risk = RiskLevel.MODERATE
+
+    recommended_blocks, no_safe_window = compute_recommended_blocks(hours, profile)
 
     hydration = {"warning": needs_hydration_warning, "text": "Drink ~250 ml every 15-20 minutes." if needs_hydration_warning else "Drink normally."}
     mask = {"needed": mask_needed, "type": "N95/FFP2" if mask_needed else "None"}
@@ -145,6 +291,8 @@ def plan_day(readings: List[HourlyReading], profile: WorkerProfile, city_label: 
         hours=hours,
         windows=windows,
         dangerous_windows=dangerous,
+        recommended_blocks=recommended_blocks,
+        no_safe_window=no_safe_window,
         overall_risk=overall_risk,
         hydration=hydration,
         mask=mask,
