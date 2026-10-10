@@ -6,12 +6,12 @@ import { NavPill } from '../components/NavPill';
 describe('NavPill Component', () => {
   it('renders navigation tabs and highlights active tab', () => {
     render(
-      <MemoryRouter initialEntries={['/board']}>
+      <MemoryRouter initialEntries={['/plans']}>
         <NavPill region="ap-south-1" />
       </MemoryRouter>
     );
 
-    const boardTab = screen.getByRole('link', { name: /Risk Board/i });
+    const boardTab = screen.getByRole('link', { name: /Plans/i });
     expect(boardTab).toHaveClass('active');
 
     const homeTab = screen.getByRole('link', { name: /^Home$/i });

@@ -149,23 +149,35 @@ export interface BoardJob {
   job_type: JobType;
   current_risk: RiskLevel;
   peak_12h_risk: RiskLevel;
-  peak_wbgt_c: number;
-  hours_flagged: number;
+  peak_wbgt_c?: number;
+  hours_flagged?: number;
+  workload?: Workload | string;
+  sun_exposure?: SunExposure | string;
 }
 
 export interface BoardCity {
   city_id: string;
   city_name: string;
-  current_risk: RiskLevel;
-  current_temp_c: number;
-  current_wbgt_c: number;
-  current_aqi: number;
-  peak_12h_risk: RiskLevel;
-  peak_12h_wbgt_c: number;
-  dominant_factor: string;
-  active_crews: number;
-  status: 'SAFE' | 'CAUTION' | 'DANGER';
-  jobs?: BoardJob[];
+  lat?: number;
+  lon?: number;
+  current_risk?: RiskLevel;
+  current_temp_c?: number;
+  current_wbgt_c?: number;
+  current_aqi?: number;
+  peak_12h_risk?: RiskLevel;
+  peak_12h_wbgt_c?: number;
+  dominant_factor?: string;
+  active_crews?: number;
+  status?: 'SAFE' | 'CAUTION' | 'DANGER';
+  jobs?: BoardJob[] | Record<string, {
+    current_risk?: RiskLevel;
+    next_12h_peak_risk?: RiskLevel;
+    peak_12h_risk?: RiskLevel;
+    peak_wbgt_c?: number;
+    hours_flagged?: number;
+    workload?: string;
+    sun_exposure?: string;
+  }>;
 }
 
 export interface BoardResponse {

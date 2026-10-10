@@ -58,8 +58,8 @@ export const Home: React.FC = () => {
         </p>
 
         <div style={{ display: 'flex', gap: 'var(--space-4)', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
-          <Button variant="primary" as="a" href="#/board">
-            Open the Risk Board
+          <Button variant="primary" as="a" href="#/plans">
+            Open Shift Planner
           </Button>
           <Button variant="secondary" as="a" href="#/plans?scenario=delhi-heatwave-2025-06-09">
             See a real heatwave day
@@ -448,8 +448,8 @@ export const Home: React.FC = () => {
             Inspect city risk matrices, generate custom worker plans, or register your crew with our open-source copilot.
           </p>
           <div style={{ display: 'flex', gap: 'var(--space-4)', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Button variant="primary" as="a" href="#/board">
-              Open the Risk Board
+            <Button variant="primary" as="a" href="#/plans">
+              Open Shift Planner
             </Button>
             <Button variant="secondary" as="a" href="#/crews" style={{ color: '#FFFFFF', borderColor: '#FFFFFF' }}>
               Register a Worker Crew

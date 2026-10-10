@@ -16,12 +16,10 @@ export const HelpButton: React.FC<HelpButtonProps> = ({
 
   const shortcuts = [
     { key: 'g then h', desc: 'Navigate to Home' },
-    { key: 'g then b', desc: 'Navigate to Risk Board' },
     { key: 'g then a', desc: 'Navigate to Analytics' },
     { key: 'g then p', desc: 'Navigate to Plans' },
     { key: 'g then c', desc: 'Navigate to Crews' },
     { key: 'g then u', desc: 'Navigate to Audit' },
-    { key: 'g then r', desc: 'Navigate to Report' },
     { key: 'g then s', desc: 'Navigate to Safety' },
     { key: 'g then d', desc: 'Navigate to Design System' },
     { key: '/', desc: 'Open / Focus Plan Generator' },

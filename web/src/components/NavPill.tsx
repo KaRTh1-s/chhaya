@@ -37,12 +37,10 @@ export const NavPill: React.FC<NavPillProps> = ({ region = 'ap-south-1' }) => {
 
   const navItems = [
     { label: 'Home', path: '/' },
-    { label: 'Risk Board', path: '/board' },
     { label: 'Analytics', path: '/analytics' },
     { label: 'Plans', path: '/plans' },
     { label: 'Crews', path: '/crews' },
     { label: 'Audit', path: '/audit' },
-    { label: 'Report', path: '/report' },
     { label: 'Safety', path: '/safety' },
   ];
 

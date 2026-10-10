@@ -74,9 +74,6 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) 
           case 'h':
             navigate('/');
             break;
-          case 'b':
-            navigate('/board');
-            break;
           case 'a':
             navigate('/analytics');
             break;
@@ -88,9 +85,6 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions = {}) 
             break;
           case 'u':
             navigate('/audit');
-            break;
-          case 'r':
-            navigate('/report');
             break;
           case 's':
             navigate('/safety');
