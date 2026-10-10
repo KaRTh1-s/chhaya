@@ -7,6 +7,6 @@
 - [x] Phase 2.1: Honesty, Scenarios & Calibration (Heat-only hydration, scenario replays, WBGT calibration, response hygiene)
 - [x] Phase 3: Strands Agent & LLM Fallback (Bedrock Converse, TemplateAdvisor, Strict Validator)
 - [x] Phase 4: Web UI & Design System Foundation
-- [ ] Phase 5: Web UI Real Pages & Integration
+- [x] Phase 5: Web UI Real Pages & Integration
 - [ ] Phase 6: Proactive Alerts (EventBridge + SNS)
 - [ ] Phase 7: Deployment & Final Polish

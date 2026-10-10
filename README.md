@@ -130,10 +130,21 @@ npm run dev
 ### 4. Tests, Lint & Production Build
 ```powershell
 # In web/ directory
-npm test          # Run Vitest test suite (14 passing tests)
+npm test          # Run Vitest test suite (34 passing tests across 16 files)
 npm run lint      # Run Oxlint
 npm run build     # Compile TypeScript and bundle with Vite
 ```
+
+### 5. Application Pages
+
+- `/`: Home landing page with live product preview, 3-language advisory switcher, and architecture ticker.
+- `/plans`: Core shift safety planner with 12 Indian cities, GPS locator, 4 job profiles, 24h interactive ribbon, inline-SVG WBGT/AQI curves, evidence citations modal, and WhatsApp share text exporter.
+- `/board`: National Heat & Air Quality operational grid with Live and Replay tabs.
+- `/crews`: Workforce roster management with passcode-protected write unlock (`sessionStorage`), crew creation, deletion, and shift plan detail drawer.
+- `/report`: Printable one-page daily occupational brief with ranked city comparisons, flagged window schedules, hydration & PPE directives, and print stylesheet.
+- `/analytics`: Truthful system telemetry counters (`seeded` demo tag), LLM first-pass validation rate with sample size denominator, and deterministic client-side handmade inline-SVG charts across 4 benchmark historical weather scenarios.
+- `/audit`: Immutable operational event trail with event type filters, relative time formatters, expandable JSON detail payloads, and PII-free privacy notice.
+- `/safety`: Scientific basis and transparency hub rendering dynamic assumptions matrix (`assumptions.json`), deterministic 4-step calculation pipeline, plain-words model validator rules, zero-LLM template fallbacks, meteorological limitations, and National 108 emergency heat stroke protocols.
 
 ### Environment Variables
 
@@ -141,5 +152,6 @@ npm run build     # Compile TypeScript and bundle with Vite
 | :--- | :--- | :--- |
 | `VITE_API_URL` | `/api` | Base API URL prefix (proxied to `http://localhost:8787` in dev) |
 | `VITE_USE_MOCK`| `0` | When set to `1`, forces mock/fixture replay mode with visible badge |
+
 
 

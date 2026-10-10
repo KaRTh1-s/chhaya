@@ -4,8 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0] - 2026-10-10
+## [0.5.0] - 2026-10-10
 ### Added
+- Complete implementation of all 8 production application pages with code splitting (`React.lazy`), shared loading skeletons, error states with retry, empty states, and offline banner:
+  - `/plans`: Hero shift safety planner with 12 Indian cities, GPS geolocation bounding box resolution, 4 job profiles, 3-language selector, Live vs Replay modes, 24-hour interactive ribbon, inline-SVG WBGT & AQI curves with workload limits, hydration schedule, mask recommendations, plain-language advisory cards with modal EvidenceChips, WhatsApp text formatter, Web Share API, and URL query synchronization.
+  - `/board`: National Heat & Air Quality operational grid with Live and Replay tabs, sorting by thermal risk, job filtering, and quick navigation prefill.
+  - `/crews`: Workforce roster management with passcode-protected write unlock (`sessionStorage`), crew creation, deletion with modal confirmation, and crew shift plan detail drawer.
+  - `/report`: Printable one-page daily occupational brief with ranked city comparisons, flagged window schedules, hydration & PPE directives, print-optimized stylesheet, and plain-text clipboard exporter.
+  - `/analytics`: Truthful system telemetry counters (`seeded` demo tag), LLM first-pass validation rate with sample size denominator, and deterministic client-side handmade inline-SVG charts across 4 benchmark historical weather scenarios.
+  - `/audit`: Immutable operational event trail with event type filters, relative time formatters, expandable JSON detail payloads, and prominent PII-free privacy notice.
+  - `/safety`: Scientific basis and transparency hub rendering dynamic assumptions matrix (`assumptions.json`), deterministic 4-step calculation pipeline, plain-words model validator rules, zero-LLM template fallbacks, meteorological limitations, and National 108 emergency heat stroke protocols.
+  - Home polish: Honest data wording across product previews, calibrated threshold citations, and dynamic architecture ticker.
+- Real mock data generation script (`scripts/make-mock-data.py`) running `chhaya_engine` and `TemplateAdvisor` in-process from real historical fixtures to produce deterministic plans, multilingual advisories, and `assumptions.json`.
+- OpenAPI Contract testing suite (`openapiContract.test.ts`) validating API client endpoint signatures and response schema fidelity against `docs/openapi.yaml`.
+- Comprehensive Vitest unit & integration test suite (34 tests across 16 files).
+
 - Complete editorial Web Design System with design tokens (`tokens.css`, `base.css`, `components.css`), fluid typography scales (`EB Garamond`, `Inter Variable`, `JetBrains Mono`), and tactile hard offset CTA drop shadows.
 - Interactive App Shell with `TopBanner` (truthful stack flags), `NavPill` (with live clock and mock indicator), `CursorGlow`, floating `HelpButton`, and comprehensive `Footer`.
 - Home Page featuring headline hero, tilted product preview with Delhi heatwave plan, 3-language advisory switcher (EN / हिन्दी / தமிழ்), dark forest live telemetry stats band, weather vs Chhaya comparison cards, 4-step workflow, 6 feature cards, AWS architecture ticker, and 2-panel FAQ widget.
