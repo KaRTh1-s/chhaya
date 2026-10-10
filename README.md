@@ -85,3 +85,47 @@ Invoke-RestMethod -Uri "http://localhost:8787/audit?limit=5" -Method Get
 ```
 This packages `chhaya_engine` alongside the backend handler into `backend/build/` ready for SAM deployment.
 
+## Web Application (Vite + React + TypeScript)
+
+The web client runs independently or proxied against the local backend server.
+
+### 1. Install Dependencies
+```powershell
+cd web
+npm install
+```
+
+### 2. Run in Standalone Mock / Replay Mode (Zero backend required)
+```powershell
+# In web/ directory
+$env:VITE_USE_MOCK="1"
+npm run dev
+```
+Open `http://localhost:5173` to explore the UI with real recorded weather fixtures from Delhi, Chennai, and Coimbatore. A visible `"demo data"` badge is displayed in the live status pill.
+
+### 3. Run with Local Backend API
+```powershell
+# Terminal 1 (Repo root): Start local mock API
+.\scripts\dev.ps1 serve
+
+# Terminal 2 (web/ directory): Start Vite dev server with proxy (/api -> http://localhost:8787)
+cd web
+npm run dev
+```
+
+### 4. Tests, Lint & Production Build
+```powershell
+# In web/ directory
+npm test          # Run Vitest test suite (14 passing tests)
+npm run lint      # Run Oxlint
+npm run build     # Compile TypeScript and bundle with Vite
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+| :--- | :--- | :--- |
+| `VITE_API_URL` | `/api` | Base API URL prefix (proxied to `http://localhost:8787` in dev) |
+| `VITE_USE_MOCK`| `0` | When set to `1`, forces mock/fixture replay mode with visible badge |
+
+

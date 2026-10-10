@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-10-10
+### Added
+- Complete editorial Web Design System with design tokens (`tokens.css`, `base.css`, `components.css`), fluid typography scales (`EB Garamond`, `Inter Variable`, `JetBrains Mono`), and tactile hard offset CTA drop shadows.
+- Interactive App Shell with `TopBanner` (truthful stack flags), `NavPill` (with live clock and mock indicator), `CursorGlow`, floating `HelpButton`, and comprehensive `Footer`.
+- Home Page featuring headline hero, tilted product preview with Delhi heatwave plan, 3-language advisory switcher (EN / हिन्दी / தமிழ்), dark forest live telemetry stats band, weather vs Chhaya comparison cards, 4-step workflow, 6 feature cards, AWS architecture ticker, and 2-panel FAQ widget.
+- Living styleguide and component catalog at `/design` route and `docs/design/DESIGN_SYSTEM.md`.
+- Hand-written TypeScript API layer (`src/api/types.ts`, `src/api/client.ts`, `src/api/mock.ts`) with transparent fallback to real fixture-derived JSON data (`scripts/make-mock-data.py`).
+- Global keyboard shortcuts navigation hook (`g` then `h/b/a/p/c/u/r/s/d`, `/` focus plan, `?` help, `Esc` dismiss).
+- Unit and integration test suite (14 passing tests) covering components, mock fallback, ARIA accessibility labels, and honest counter handling.
+
 ## [0.2.0] - 2026-10-10
 ### Added
 - AWS SAM Backend infrastructure on Lambda (`python3.11`, `arm64`), HTTP API Gateway v2, and DynamoDB.
