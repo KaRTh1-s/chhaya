@@ -1,0 +1,14 @@
+{
+  "include": [
+    "engine",
+    "backend",
+    "scripts"
+  ],
+  "extraPaths": [
+    "engine/src",
+    "backend/src",
+    "backend"
+  ],
+  "venvPath": "..",
+  "venv": "chhaya/.venv"
+}

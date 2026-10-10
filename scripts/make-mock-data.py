@@ -4,9 +4,8 @@ Generate realistic mock data JSON files for the Chhaya Web UI
 directly from real engine fixtures, planner calculations, and TemplateAdvisor.
 """
 import json
-import os
 import sys
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 
 # Add engine/src and backend/src to Python path
@@ -14,19 +13,17 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "engine" / "src"))
 sys.path.insert(0, str(REPO_ROOT / "backend" / "src"))
 
-from chhaya_engine.cities import CITIES, list_cities
+from chhaya_backend.agent.advisors import TemplateAdvisor
+from chhaya_backend.agent.facts import build_facts_from_plan
+from chhaya_engine.cities import CITIES
 from chhaya_engine.models import (
     HourlyReading,
-    HourStatus,
     JobType,
-    RiskLevel,
-    Workload,
     SunExposure,
+    Workload,
     create_worker_profile,
 )
 from chhaya_engine.planner import plan_day
-from chhaya_backend.agent.advisors import TemplateAdvisor
-from chhaya_backend.agent.facts import build_facts_from_plan
 
 
 def load_fixture_readings(filename: str) -> tuple[list[HourlyReading], dict]:
