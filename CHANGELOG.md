@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-10-10
+### Added
+- Automated deployment script `scripts/deploy_backend.ps1` with test enforcement, build packaging, SAM linting, and secret validation.
+- End-to-end smoke test and benchmark runner `scripts/smoke_api.ps1` measuring cold starts, p50/p95 warm latencies, and response hygiene.
+- CloudWatch error alarms for `ApiFunction` and `AdvisorFunction` in SAM template (`backend/template.yaml`).
+- Decommissioning script `scripts/teardown_backend.ps1` for clean stack deletion.
+
+## [0.3.1] - 2026-10-10
+### Added
+- Full Hindi (`hi`) and Tamil (`ta`) localization across all advisor components (cities, risk terms, window guidance, hydration, and seek-help lines).
+- Driving evidence card mapping in `facts.py` ensuring every stated number/time cites the exact matching evidence card.
+- Strict validator enforcement: rejects mismatched evidence citations and runs of 3+ Latin words in Hindi/Tamil.
+- Centralized translation catalog in `backend/src/chhaya_backend/agent/i18n.py` and native review list in `docs/i18n_review.md`.
+- Honesty policy in `AGENTS.md` and measured WBGT safety margin audit in `docs/ASSUMPTIONS.md`.
+
 ## [0.3.0] - 2026-10-10
 ### Added
 - Plain-language worker Advisory Agent endpoint `POST /advise` with multilingual support in English (`en`), Hindi (`hi`), and Tamil (`ta`).
