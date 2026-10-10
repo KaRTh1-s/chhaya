@@ -1,6 +1,6 @@
 # Assumptions & Heuristics
 
-This document logs every threshold, calibration parameter, and heuristic in Chhaya's engine to guarantee transparency.
+This document logs every threshold, calibration parameter, and heuristic in Chhaya's engine and advisory agent to guarantee transparency.
 
 | Component | Assumption/Heuristic | Value | Why | Source | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -12,6 +12,10 @@ This document logs every threshold, calibration parameter, and heuristic in Chha
 | **AQI** | Workload multipliers | Light: 1.0, Mod: 1.5, Heavy: 2.5 | Increased ventilation rate dramatically increases inhaled dose | Respiratory physiology | Verified |
 | **Health**| Hydration guidance | ~250ml every 15-20 min during frequent windows; otherwise drink normally | Derived ONLY from heat stress (WBGT caution or worse); air pollution escalation never triggers frequent hydration. | Occupational Physiology / NIOSH | Verified |
 | **Schedule**| Recommended Blocks | Up to 2 non-overlapping blocks (min 2h each, total ≤ max_shift_hours) | Minimises combined risk, strictly preferring WORK > CAUTION > REDUCED; never includes AVOID. Block status = worst hour inside it. | Algorithmic Optimization | Verified |
+| **Agent** | Bedrock Model ID | `apac.amazon.nova-micro-v1:0` (or `apac.anthropic.claude-3-5-sonnet-20241022-v2:0`) | Ultra-fast inference (<400ms), low-cost cross-region inference profile in `ap-south-1` / `us-east-1`. | AWS Bedrock Regional Availability | Verified |
+| **Agent** | Daily LLM Call Cap | 300 calls/day (`MAX_LLM_CALLS_PER_DAY`) | Prevents runaway inference costs. Excess requests gracefully fallback to `TemplateAdvisor`. | Cost control policy | Verified |
+| **Agent** | Strict Grounding Verification | 1-5 sentences; evidence citations; allowed-numbers set; script check; medical claim blocklist | Completely eliminates hallucinations and ungrounded safety advice. | Safety Engineering | Verified |
+| **Agent** | Prompt Versioning | `PROMPT_VERSION = "1.0.0"` | Tracks exact prompt template version in audit log and response payload for traceability. | Governance | Verified |
 | **Stats**| Flagged Hours (`hours_flagged`) | Count of AVOID or REDUCED(15/45) hours across generated DayPlans | Accurately identifies acute exposure hours prevented | Operational Definition | Verified |
 | **Stats**| Lead Time (`avg_lead_time_hours`) | Mean hours between plan generation and the start of the first flagged dangerous window | Measures advance warning window for shift rescheduling | Operational Definition | Verified |
 | **Backend** | Forecast cache TTL | 30 minutes (1800s) | Open-Meteo models update hourly; 30m cache minimizes duplicate network calls | System performance | Verified |

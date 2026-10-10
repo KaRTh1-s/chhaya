@@ -16,14 +16,21 @@ class DynamoDBStore:
     def __init__(self, table_name: str | None = None, dynamodb_resource=None):
         self.config = get_config()
         self.table_name = table_name or self.config.table_name
-        self.dynamodb = dynamodb_resource or boto3.resource("dynamodb", region_name=self.config.aws_region)
+        self._dynamodb = dynamodb_resource
         self._table = None
+
+    @property
+    def dynamodb(self):
+        if self._dynamodb is None:
+            self._dynamodb = boto3.resource("dynamodb", region_name=self.config.aws_region)
+        return self._dynamodb
 
     @property
     def table(self):
         if self._table is None:
             self._table = self.dynamodb.Table(self.table_name)
         return self._table
+
 
     # --- Readings Cache ---
     def get_readings_cache(self, lat_lon_key: str) -> list[dict[str, Any]] | None:

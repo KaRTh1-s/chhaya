@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-10-10
+### Added
+- Plain-language worker Advisory Agent endpoint `POST /advise` with multilingual support in English (`en`), Hindi (`hi`), and Tamil (`ta`).
+- Grounded `TemplateAdvisor` generating deterministic, verifiable shift advice with zero network dependencies.
+- `BedrockConverseAdvisor` supporting Amazon Bedrock Converse API with prompt versioning (`1.0.0`), 1-retry with error feedback, and graceful fallback to templates.
+- Strict `validate_advisory_json` grounding pipeline verifying 1-5 sentence count, valid evidence card citations, absence of hallucinated numbers (`allowed_numbers` set matching), Devanagari/Tamil script compliance, and medical claim blocklist.
+- Split Lambda architecture in SAM template (`ApiFunction` for fast sub-20ms cold starts, `AdvisorFunction` for Bedrock / AI SDK execution).
+- Daily LLM call cost limiter via atomic DynamoDB counter (`MAX_LLM_CALLS_PER_DAY=300`) with automatic `daily_cap` fallback.
+- PowerShell helper `scripts/try_advisor.ps1` for local and live advisor verification.
+- 48 parameter matrix test suite covering all fixtures $\times$ job types $\times$ languages.
+
 ## [0.2.1] - 2026-10-10
 ### Added
 - Structured hydration guidance in `DayPlan` and `HourPlan.hydration` ("NORMAL" | "FREQUENT") derived strictly from heat stress without air-pollution false triggers.

@@ -9,3 +9,7 @@ build/
 .env
 .aws-sam/
 *.egg-info/
+backend/build/
+backend/build_advisor/
+
+
