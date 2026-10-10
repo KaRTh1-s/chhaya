@@ -1,4 +1,5 @@
 """Stats service for global metrics tracking."""
+import os
 from typing import Any
 
 from chhaya_engine.cities import list_cities
@@ -34,10 +35,17 @@ class StatsService:
             lead_time_count=lead_count
         )
 
+    def record_advisory(self, first_pass_valid: bool) -> None:
+        self.store.increment_stats(
+            advisories=1,
+            llm_first_pass_valid=1 if first_pass_valid else 0
+        )
+
     def get_global_stats(self) -> dict[str, Any]:
         stats = self.store.get_stats()
         crews = self.store.list_crews()
         cities = list_cities()
+        seeded = (os.environ.get("CHHAYA_SEED_DEMO") == "1")
         
         return {
             "plans_generated": stats["plans_generated"],
@@ -45,5 +53,8 @@ class StatsService:
             "hours_flagged": stats["hours_flagged"],
             "avg_lead_time_hours": stats["avg_lead_time_hours"],
             "crews_registered": len(crews),
+            "advisories_generated": stats.get("advisories_generated", 0),
+            "llm_first_pass_valid_rate": stats.get("llm_first_pass_valid_rate"),
             "alerts_sent": 0,
+            "seeded": seeded,
         }

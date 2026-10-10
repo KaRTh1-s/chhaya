@@ -91,85 +91,88 @@ def compute_recommended_blocks(hours: list[HourPlan], profile: WorkerProfile) ->
     if not non_avoid_hours:
         return [], True
 
-    # Identify contiguous runs of non-AVOID hours
-    runs: list[list[HourPlan]] = []
-    current_run: list[HourPlan] = []
-    for h in shift_hours:
-        if h.status != HourStatus.AVOID:
-            current_run.append(h)
-        else:
-            if current_run:
-                runs.append(current_run)
-                current_run = []
-    if current_run:
-        runs.append(current_run)
+    # Generate all valid contiguous candidate blocks (length in [2, max_shift_hours] and no AVOID)
+    candidate_blocks: list[list[HourPlan]] = []
+    n = len(shift_hours)
+    for i in range(n):
+        for j in range(i + 2, min(i + profile.max_shift_hours + 1, n + 1)):
+            sub = shift_hours[i:j]
+            if all(h.status != HourStatus.AVOID for h in sub):
+                candidate_blocks.append(sub)
 
-    if not runs:
+    if not candidate_blocks:
         return [], True
 
-    def hour_cost(h: HourPlan) -> float:
-        if h.status == HourStatus.WORK: return 1.0
-        if h.status == HourStatus.CAUTION: return 2.0
-        if "HEAT_REDUCED_45_15" in h.reasons: return 3.0
-        if "HEAT_REDUCED_30_30" in h.reasons: return 4.0
-        if "HEAT_REDUCED_15_45" in h.reasons: return 5.0
-        if h.status == HourStatus.REDUCED: return 3.5
-        return 100.0
+    def hour_penalty(h: HourPlan) -> float:
+        if h.status == HourStatus.WORK:
+            return 0.0
+        if h.status == HourStatus.CAUTION:
+            return 100.0
+        if "HEAT_REDUCED_45_15" in h.reasons:
+            return 1000.0
+        if "HEAT_REDUCED_30_30" in h.reasons:
+            return 2000.0
+        if "HEAT_REDUCED_15_45" in h.reasons:
+            return 4000.0
+        if h.status == HourStatus.REDUCED:
+            return 1500.0
+        return 100000.0
 
-    # Find up to 2 contiguous blocks minimizing total cost
-    best_blocks: list[list[HourPlan]] = []
-    
-    total_non_avoid = sum(len(r) for r in runs)
-    if total_non_avoid <= profile.max_shift_hours and len(runs) <= 2:
-        best_blocks = runs
-    else:
-        # Search candidate combinations of 1 or 2 sub-blocks
-        all_subsegments: list[list[HourPlan]] = []
-        for r in runs:
-            for i in range(len(r)):
-                for j in range(i + 1, min(i + profile.max_shift_hours + 1, len(r) + 1)):
-                    all_subsegments.append(r[i:j])
-        
-        best_combo: tuple[list[HourPlan], ...] | None = None
-        best_score = float('inf')
-        
-        # Check single subsegments
-        for s1 in all_subsegments:
-            dur = len(s1)
-            if dur <= profile.max_shift_hours:
-                cost = sum(hour_cost(h) for h in s1)
-                # We want maximum duration up to max_shift_hours, then lowest cost
-                score = -dur * 1000 + cost
-                if score < best_score:
-                    best_score = score
-                    best_combo = (s1,)
-        
-        # Check 2 distinct subsegments from different runs
-        for i, s1 in enumerate(all_subsegments):
-            for s2 in all_subsegments[i+1:]:
-                # Disjoint check: s1 and s2 must not overlap and be ordered
-                if s1[-1].hour < s2[0].hour:
-                    dur = len(s1) + len(s2)
-                    if dur <= profile.max_shift_hours:
-                        cost = sum(hour_cost(h) for h in s1) + sum(hour_cost(h) for h in s2)
-                        score = -dur * 1000 + cost
-                        if score < best_score:
-                            best_score = score
-                            best_combo = (s1, s2)
+    def block_worst_status(block: list[HourPlan]) -> HourStatus:
+        order = [HourStatus.WORK, HourStatus.CAUTION, HourStatus.REDUCED, HourStatus.REST, HourStatus.AVOID]
+        worst = HourStatus.WORK
+        for h in block:
+            if order.index(h.status) > order.index(worst):
+                worst = h.status
+        return worst
 
-        best_blocks = list(best_combo) if best_combo else [runs[0][:profile.max_shift_hours]]
+    # Score combinations of 1 or 2 non-overlapping blocks
+    best_combo: tuple[list[HourPlan], ...] | None = None
+    best_score = float('inf')
 
+    # Single blocks
+    for b in candidate_blocks:
+        dur = len(b)
+        penalty = sum(hour_penalty(h) for h in b)
+        score = penalty - (dur * 1.0)
+        if score < best_score:
+            best_score = score
+            best_combo = (b,)
+
+    # Pairs of non-overlapping blocks
+    num_cand = len(candidate_blocks)
+    for i in range(num_cand):
+        b1 = candidate_blocks[i]
+        for j in range(i + 1, num_cand):
+            b2 = candidate_blocks[j]
+            if b1[-1].hour < b2[0].hour:
+                dur = len(b1) + len(b2)
+                if dur <= profile.max_shift_hours:
+                    penalty = sum(hour_penalty(h) for h in b1) + sum(hour_penalty(h) for h in b2)
+                    score = penalty - (dur * 1.0)
+                    if score < best_score:
+                        best_score = score
+                        best_combo = (b1, b2)
+            elif b2[-1].hour < b1[0].hour:
+                dur = len(b1) + len(b2)
+                if dur <= profile.max_shift_hours:
+                    penalty = sum(hour_penalty(h) for h in b1) + sum(hour_penalty(h) for h in b2)
+                    score = penalty - (dur * 1.0)
+                    if score < best_score:
+                        best_score = score
+                        best_combo = (b2, b1)
+
+    if not best_combo:
+        return [], True
+
+    chosen_blocks = sorted(best_combo, key=lambda b: b[0].hour)
     windows: list[Window] = []
-    for b in best_blocks:
-        if not b: continue
+    for b in chosen_blocks:
         start_time = b[0].hour
         end_time = b[-1].hour + timedelta(hours=1)
+        w_status = block_worst_status(b)
         dom_reason = get_dominant_reason(b)
-        
-        # Dominant status
-        status_counts = Counter(h.status for h in b)
-        dom_status = max(status_counts.keys(), key=lambda s: (status_counts[s], get_risk_level(s).value))
-        windows.append(Window(start_time, end_time, dom_status, dom_reason))
+        windows.append(Window(start_time, end_time, w_status, dom_reason))
 
     return windows, False
 
@@ -179,7 +182,6 @@ def plan_day(readings: list[HourlyReading], profile: WorkerProfile, city_label: 
     limit = WBGT_LIMITS[profile.workload]
 
     mask_needed = False
-    needs_hydration_warning = False
 
     for r in readings:
         ev_ids = []
@@ -201,7 +203,8 @@ def plan_day(readings: list[HourlyReading], profile: WorkerProfile, city_label: 
             ev_ids.append(ev_id_aqi)
 
         # Base Status
-        status, reasons = get_base_heat_status(wbgt, limit)
+        base_status, reasons = get_base_heat_status(wbgt, limit)
+        status = base_status
 
         # Air Overlay
         if aqi is not None:
@@ -221,14 +224,16 @@ def plan_day(readings: list[HourlyReading], profile: WorkerProfile, city_label: 
                     reasons.append("AIR_POOR_MASK")
                 mask_needed = True
 
-        # Window constraints
-        if r.time.hour < profile.preferred_start_hour or r.time.hour >= profile.preferred_end_hour:
+        # Shift window check
+        is_shift_hour = (profile.preferred_start_hour <= r.time.hour < profile.preferred_end_hour)
+        if not is_shift_hour:
             status = HourStatus.REST
             reasons = ["OUTSIDE_SHIFT_WINDOW"]
             ev_ids = []
 
-        if status in [HourStatus.CAUTION, HourStatus.REDUCED, HourStatus.AVOID]:
-            needs_hydration_warning = True
+        # Hydration is derived ONLY from heat component (WBGT within caution band or worse)
+        # Air quality escalation must never trigger FREQUENT.
+        hour_hydration = "FREQUENT" if (is_shift_hour and base_status in (HourStatus.CAUTION, HourStatus.REDUCED, HourStatus.AVOID)) else "NORMAL"
 
         risk = get_risk_level(status)
         
@@ -240,7 +245,8 @@ def plan_day(readings: list[HourlyReading], profile: WorkerProfile, city_label: 
             aqi_category=aqi_cat,
             risk_level=risk,
             reasons=reasons,
-            evidence_ids=ev_ids
+            evidence_ids=ev_ids,
+            hydration=hour_hydration
         ))
 
     # Merge windows
@@ -278,7 +284,35 @@ def plan_day(readings: list[HourlyReading], profile: WorkerProfile, city_label: 
 
     recommended_blocks, no_safe_window = compute_recommended_blocks(hours, profile)
 
-    hydration = {"warning": needs_hydration_warning, "text": "Drink ~250 ml every 15-20 minutes." if needs_hydration_warning else "Drink normally."}
+    # Structured hydration summary
+    frequent_windows = []
+    in_freq = False
+    freq_start = None
+    prev_h = None
+    for h in hours:
+        if h.hydration == "FREQUENT":
+            if not in_freq:
+                in_freq = True
+                freq_start = h.hour
+            prev_h = h.hour
+        else:
+            if in_freq:
+                frequent_windows.append({
+                    "start": freq_start.isoformat(),
+                    "end": (prev_h + timedelta(hours=1)).isoformat()
+                })
+                in_freq = False
+    if in_freq and freq_start and prev_h:
+        frequent_windows.append({
+            "start": freq_start.isoformat(),
+            "end": (prev_h + timedelta(hours=1)).isoformat()
+        })
+
+    hydration = {
+        "frequent_windows": frequent_windows,
+        "guideline": "about 250 ml every 15-20 minutes during frequent windows; otherwise drink normally"
+    }
+
     mask = {"needed": mask_needed, "type": "N95/FFP2" if mask_needed else "None"}
 
     seek_help = [

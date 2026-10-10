@@ -83,7 +83,10 @@ def main():
     else:
         blocks_str = ", ".join(f"{b.start.strftime('%H:%M')}-{b.end.strftime('%H:%M')} [{b.status.value}]" for b in plan.recommended_blocks)
         print(f"  Best blocks:    {blocks_str}")
-    print(f"  Hydration:      {plan.hydration['text']}")
+    print(f"  Hydration:      {plan.hydration['guideline']}")
+    if plan.hydration.get("frequent_windows"):
+        freq_str = ", ".join(f"{w['start'][11:16]}-{w['end'][11:16]}" for w in plan.hydration["frequent_windows"])
+        print(f"  Frequent Win:   {freq_str}")
     print(f"  Mask:           {plan.mask['type']}")
     print(f"  Evidence:       {len(plan.evidence)} cards generated")
 

@@ -100,3 +100,79 @@ def test_none_pollutant_handling_a5():
         assert h.aqi_category is None
     assert plan.mask["needed"] is False
 
+def test_hydration_heat_only_a1():
+    """A1: HourPlan.hydration = NORMAL | FREQUENT derived ONLY from heat; smog rider has 0 FREQUENT hours."""
+    import json
+    with open("engine/tests/fixtures/real_delhi_winter_smog.json", "r", encoding="utf-8") as f:
+        d = json.load(f)
+    readings = [
+        HourlyReading(
+            time=datetime.fromisoformat(x["time"]),
+            temp_c=x["temp_c"],
+            rh_pct=x["rh_pct"],
+            shortwave_wm2=x["shortwave_wm2"],
+            wind_ms=x["wind_ms"],
+            pm2_5=x.get("pm2_5"),
+            pm10=x.get("pm10")
+        )
+        for x in d["readings"]
+    ]
+    profile = create_worker_profile(JobType.RIDER)
+    plan = plan_day(readings, profile, "Delhi", datetime(2025, 11, 23, 0, 0, tzinfo=UTC))
+    
+    frequent_hours = [h for h in plan.hours if h.hydration == "FREQUENT"]
+    assert len(frequent_hours) == 0
+    assert plan.hydration["frequent_windows"] == []
+    assert "about 250 ml every 15-20 minutes during frequent windows; otherwise drink normally" in plan.hydration["guideline"]
+
+def test_recommended_blocks_delhi_smog_rider_a2():
+    """A2: Delhi winter smog + RIDER/MODERATE first recommended block must be 13:00-17:00 WORK."""
+    import json
+    with open("engine/tests/fixtures/real_delhi_winter_smog.json", "r", encoding="utf-8") as f:
+        d = json.load(f)
+    readings = [
+        HourlyReading(
+            time=datetime.fromisoformat(x["time"]),
+            temp_c=x["temp_c"],
+            rh_pct=x["rh_pct"],
+            shortwave_wm2=x["shortwave_wm2"],
+            wind_ms=x["wind_ms"],
+            pm2_5=x.get("pm2_5"),
+            pm10=x.get("pm10")
+        )
+        for x in d["readings"]
+    ]
+    profile = create_worker_profile(JobType.RIDER)
+    plan = plan_day(readings, profile, "Delhi", datetime(2025, 11, 23, 0, 0, tzinfo=UTC))
+    
+    assert len(plan.recommended_blocks) >= 1
+    b0 = plan.recommended_blocks[0]
+    assert b0.start.hour == 13
+    assert b0.end.hour == 17
+    assert b0.status == HourStatus.WORK
+
+def test_recommended_blocks_coimbatore_mild_a2():
+    """A2: Coimbatore mild blocks are WORK-only."""
+    import json
+    with open("engine/tests/fixtures/real_coimbatore_mild.json", "r", encoding="utf-8") as f:
+        d = json.load(f)
+    readings = [
+        HourlyReading(
+            time=datetime.fromisoformat(x["time"]),
+            temp_c=x["temp_c"],
+            rh_pct=x["rh_pct"],
+            shortwave_wm2=x["shortwave_wm2"],
+            wind_ms=x["wind_ms"],
+            pm2_5=x.get("pm2_5"),
+            pm10=x.get("pm10")
+        )
+        for x in d["readings"]
+    ]
+    profile = create_worker_profile(JobType.VENDOR)
+    plan = plan_day(readings, profile, "Coimbatore", datetime(2025, 1, 15, 0, 0, tzinfo=UTC))
+    
+    assert len(plan.recommended_blocks) > 0
+    for b in plan.recommended_blocks:
+        assert b.status == HourStatus.WORK
+
+

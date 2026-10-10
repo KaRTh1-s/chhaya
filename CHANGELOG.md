@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-10-10
+### Added
+- Structured hydration guidance in `DayPlan` and `HourPlan.hydration` ("NORMAL" | "FREQUENT") derived strictly from heat stress without air-pollution false triggers.
+- Replay scenarios endpoint `GET /scenarios` returning 4 historical high-impact Indian weather days.
+- `POST /plan` scenario replay mode anchoring evaluation date and returning source tracking metadata (`data_source`, `scenario_id`, `recorded_date`).
+- `GET /board?mode=replay` matrix evaluation over all 4 recorded scenarios.
+- Dev-only calibration script `scripts/calibrate_wbgt.py` against Liljegren outdoor reference model (`thermofeel`).
+- Automated response hygiene tests asserting no DynamoDB storage keys (`pk`, `sk`, `ttl`) leak to callers.
+
+### Changed
+- Calibrated WBGT model with `SOLAR_ADJ_C_PER_KW_M2 = 2.0` and `CALIBRATION_OFFSET_C = -4.5`, reducing hot-dry mean bias from +4.76°C to +0.06°C.
+- `recommended_blocks` algorithm selects up to 2 non-overlapping blocks minimizing combined risk (WORK > CAUTION > REDUCED, never AVOID) with block status reflecting worst hour inside.
+- `/stats` honesty: counters start at 0 in production and demo seeding is gated strictly on `CHHAYA_SEED_DEMO=1`.
+
 ## [0.2.0] - 2026-10-10
 ### Added
 - AWS SAM Backend infrastructure on Lambda (`python3.11`, `arm64`), HTTP API Gateway v2, and DynamoDB.

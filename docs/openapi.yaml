@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Chhaya Backend API
   description: Hyperlocal Heat & Air Exposure Copilot for Outdoor Workers in India.
-  version: 0.2.0
+  version: 0.2.1
 servers:
   - url: http://localhost:8787
     description: Local development server
@@ -24,7 +24,7 @@ paths:
                     example: ok
                   version:
                     type: string
-                    example: 0.2.0
+                    example: 0.2.1
                   region:
                     type: string
                     example: ap-south-1
@@ -52,6 +52,23 @@ paths:
                     items:
                       $ref: '#/components/schemas/City'
 
+  /scenarios:
+    get:
+      summary: List recorded replay scenarios
+      description: Returns 4 historical high-impact weather and air quality days for deterministic replays.
+      responses:
+        '200':
+          description: List of scenarios
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scenarios:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Scenario'
+
   /plan:
     post:
       summary: Generate worker day plan
@@ -75,11 +92,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: City or scenario not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /board:
     get:
       summary: Get Risk Board matrix
-      description: Returns current and 12-hour peak exposure risk for all standard worker profiles across seeded cities.
+      description: Returns current and 12-hour peak exposure risk for all standard worker profiles across seeded cities or replay scenarios.
+      parameters:
+        - name: mode
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [live, replay]
+            default: live
       responses:
         '200':
           description: Risk Board matrix
@@ -91,6 +122,9 @@ paths:
                   updated_at:
                     type: string
                     format: date-time
+                  mode:
+                    type: string
+                    enum: [live, replay]
                   cities:
                     type: array
                     items:
@@ -268,6 +302,24 @@ components:
         state:
           type: string
 
+    Scenario:
+      type: object
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        city_id:
+          type: string
+        date:
+          type: string
+        max_temp_c:
+          type: number
+        max_pm2_5:
+          type: number
+        source:
+          type: string
+
     PlanRequest:
       type: object
       required:
@@ -276,6 +328,9 @@ components:
         city_id:
           type: string
           example: delhi
+        scenario:
+          type: string
+          example: delhi-heatwave-2025-06-09
         lat:
           type: number
           example: 28.61
@@ -309,6 +364,15 @@ components:
         generated_at:
           type: string
           format: date-time
+        data_source:
+          type: string
+          enum: [live, fixture, replay]
+        scenario_id:
+          type: string
+          nullable: true
+        recorded_date:
+          type: string
+          nullable: true
         hours:
           type: array
           items:
@@ -332,6 +396,13 @@ components:
           enum: [LOW, MODERATE, HIGH, EXTREME]
         hydration:
           type: object
+          properties:
+            frequent_windows:
+              type: array
+              items:
+                type: object
+            guideline:
+              type: string
         mask:
           type: object
         seek_help_lines:
@@ -350,16 +421,31 @@ components:
       properties:
         plans_generated:
           type: integer
+          description: Total number of DayPlans generated across all endpoints
         cities_covered:
           type: integer
+          description: Total number of seeded Indian cities covered
         hours_flagged:
           type: integer
+          description: Total number of AVOID or REDUCED(15/45) hours across generated plans
         avg_lead_time_hours:
           type: number
+          description: Mean hours between plan generation and the start of the first flagged dangerous window (only plans that have one)
         crews_registered:
           type: integer
+          description: Total count of active registered worker crews
         alerts_sent:
           type: integer
+        advisories_generated:
+          type: integer
+          description: Total number of LLM / Template worker advisories generated
+        llm_first_pass_valid_rate:
+          type: number
+          nullable: true
+          description: Fraction of LLM advisories passing strict validation on the first attempt (null until >0 advisories)
+        seeded:
+          type: boolean
+          description: True if demo counters were seeded via CHHAYA_SEED_DEMO=1
 
     AuditEvent:
       type: object
