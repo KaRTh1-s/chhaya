@@ -151,6 +151,7 @@ class Router:
 
     def handle_advise(self, event: dict[str, Any]) -> dict[str, Any]:
         import os
+
         from chhaya_backend.agent.advisors import Advisory, get_advisor
         from chhaya_backend.agent.facts import build_facts_from_plan
 
@@ -176,7 +177,7 @@ class Router:
         plan_dict = self.plan_service.generate_plan(params)
         facts = build_facts_from_plan(plan_dict)
 
-        max_llm_calls = int(os.environ.get("MAX_LLM_CALLS_PER_DAY", 300))
+        max_llm_calls = int(os.environ.get("MAX_LLM_CALLS_PER_DAY", "300"))
         advisor, cap_reason = get_advisor(store=self.store, max_calls_per_day=max_llm_calls)
 
         advisory = advisor.advise(facts, language=language)

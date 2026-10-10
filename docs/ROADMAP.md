@@ -9,6 +9,7 @@
 - [x] Phase 3.1: Advisory Quality & Localization (Hindi/Tamil translation, driving evidence mapping)
 - [x] Phase 3.3: Reconcile, Verify, & Quality Polish (WBGT sanity check, locatives, raw code elimination)
 - [x] Phase 7a: Backend Deployment & Smoke Automation (AWS SAM, CloudWatch Alarms, smoke_api.ps1)
+- [x] Phase 7b: Backend Deployment Verification & Correctness Fixes (Live AWS ap-south-1 verification, CPCB AQI fix, air/heat attribution)
 - [ ] Phase 4: Web UI & Design Implementation
 - [ ] Phase 5: Proactive Alerts (EventBridge + SNS)
 - [ ] Phase 6: Final Polish & Full Production Cutover

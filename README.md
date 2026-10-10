@@ -111,7 +111,7 @@ $env:CHHAYA_PASSCODE = "your-secure-passcode"
 
 ### 3. Run Smoke Tests & Benchmark
 ```powershell
-.\scripts\smoke_api.ps1 -ApiUrl "https://<api-id>.execute-api.ap-south-1.amazonaws.com" -Passcode "your-secure-passcode"
+.\scripts\smoke_api.ps1 -ApiUrl "https://09mp10pdca.execute-api.ap-south-1.amazonaws.com" -Passcode "demo"
 ```
 
 ### 4. Teardown

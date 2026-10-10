@@ -3,7 +3,6 @@ Contains translations, city scripts, locative grammar, risk descriptors, and loc
 All non-English strings are marked for native speaker review in docs/i18n_review.md.
 """
 import re
-from typing import Any
 
 # City name nominative forms in each native script
 CITY_NAMES = {
@@ -180,7 +179,7 @@ def get_seek_help_lines(codes: list[str] | None = None, lang: str = "en") -> lis
         else:
             # Check substring match against catalog values
             matched = False
-            for k, cat in SEEK_HELP_CATALOG.items():
+            for cat in SEEK_HELP_CATALOG.values():
                 if cat["en"].lower() in code.lower() or code.lower() in cat["en"].lower():
                     lines.append(cat.get(lang_key, cat["en"]))
                     matched = True

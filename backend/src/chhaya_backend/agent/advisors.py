@@ -1,28 +1,24 @@
 """Advisors implementation: Localized Template, Bedrock Converse, and Strands Agent.
 Version 1.1.0: Full localization in English, Hindi, and Tamil, with driving evidence card mapping.
 """
-from abc import ABC, abstractmethod
-from dataclasses import asdict, dataclass
-import json
 import logging
 import os
 import time
+from abc import ABC, abstractmethod
+from dataclasses import asdict, dataclass
 from typing import Any
 
 import boto3
 from botocore.config import Config
-from botocore.exceptions import ClientError
 
 from chhaya_backend.agent.facts import Facts
 from chhaya_backend.agent.i18n import (
     get_city_locative,
-    get_city_name,
     get_risk_term,
     get_seek_help_lines,
     get_status_description,
 )
 from chhaya_backend.agent.prompts import (
-    PROMPT_VERSION,
     SYSTEM_PROMPT,
     build_user_prompt,
 )
@@ -103,11 +99,11 @@ class TemplateAdvisor(Advisor):
 
         if lang == "hi":
             # --- HINDI (Devanagari Script) ---
-            # Sentence 1: Situation & Peak WBGT
+            # Sentence 1: Situation & Peak Heat
             if facts.is_replay:
-                s1 = f"{city_locative} इस दर्ज किए गए दिन स्थिति {risk_word} जोखिम पर है, जहां {peak_heat_hour} बजे अधिकतम WBGT {peak_heat_c_str} C तक पहुंचता है।"
+                s1 = f"{city_locative} इस दर्ज किए गए दिन स्थिति {risk_word} जोखिम पर है, जहां {peak_heat_hour} बजे अधिकतम गर्मी {peak_heat_c_str} C तक पहुंचती है।"
             else:
-                s1 = f"{city_locative} आज स्थिति {risk_word} जोखिम पर है, जहां {peak_heat_hour} बजे अधिकतम WBGT {peak_heat_c_str} C तक पहुंचता है।"
+                s1 = f"{city_locative} आज स्थिति {risk_word} जोखिम पर है, जहां {peak_heat_hour} बजे अधिकतम गर्मी {peak_heat_c_str} C तक पहुंचती है।"
             sentences_list.append(Sentence(s1, [peak_heat_eid]))
 
             # Sentence 2: Safe Work Windows
@@ -118,18 +114,26 @@ class TemplateAdvisor(Advisor):
                 s2 = f"काम करने के लिए सबसे सुरक्षित समय {b.start} से {b.end} तक है ({b_desc})।"
                 sentences_list.append(Sentence(s2, [b_eid]))
             elif facts.no_safe_window:
-                s2 = "आज लगातार काम के लिए कोई सुरक्षित समय नहीं है; कम गर्मी वाले घंटों में ही काम सीमित रखें।"
+                day_word = "इस दर्ज किए गए दिन" if facts.is_replay else "आज"
+                s2 = f"{day_word} लगातार काम के लिए कोई सुरक्षित समय नहीं है; बाहर खुले में काम सीमित रखें और अतिरिक्त सावधानी बरतें।"
                 sentences_list.append(Sentence(s2, [peak_heat_eid]))
             else:
                 s2 = "गर्मी के दौरान काम की गति धीमी रखें और नियमित रूप से आराम करें।"
                 sentences_list.append(Sentence(s2, [peak_heat_eid]))
 
-            # Sentence 3: Avoid / Peak Heat Pacing
+            # Sentence 3: Avoid / Peak Heat or Air Pacing
             avoid_windows = [w for w in facts.windows if w.status == "AVOID"]
             if avoid_windows:
                 aw = avoid_windows[0]
-                aw_eid = get_hour_eid(aw.start, peak_heat_eid)
-                s3 = f"{aw.start} से {aw.end} के बीच तेज गर्मी के कारण बाहर खुले में काम करने से बचें।"
+                is_air_avoid = aw.reason.startswith("AIR_")
+                if is_air_avoid:
+                    clean_h = aw.start.replace(":", "")
+                    cand_aqi = f"ev-aqi-{clean_h}"
+                    aw_eid = cand_aqi if cand_aqi in facts.evidence_id_to_numbers else (facts.peak_aqi_evidence_id or peak_heat_eid)
+                    s3 = f"{aw.start} से {aw.end} के बीच गंभीर वायु प्रदूषण के कारण बाहर खुले में काम करने से बचें।"
+                else:
+                    aw_eid = get_hour_eid(aw.start, peak_heat_eid)
+                    s3 = f"{aw.start} से {aw.end} के बीच तेज गर्मी के कारण बाहर खुले में काम करने से बचें।"
                 sentences_list.append(Sentence(s3, [aw_eid]))
             else:
                 s3 = "धूप में लगातार काम करने से बचें और समय-समय पर छाया में विश्राम लें।"
@@ -152,11 +156,11 @@ class TemplateAdvisor(Advisor):
 
         elif lang == "ta":
             # --- TAMIL (Tamil Script) ---
-            # Sentence 1: Situation & Peak WBGT
+            # Sentence 1: Situation & Peak Heat
             if facts.is_replay:
-                s1 = f"{city_locative} இந்த பதிவு செய்யப்பட்ட நாளில் நிலைமை {risk_word} ஆபத்தை எட்டுகிறது, மேலும் {peak_heat_hour} மணிக்கு அதிகபட்ச WBGT {peak_heat_c_str} C வரை உயர்கிறது."
+                s1 = f"{city_locative} இந்த பதிவு செய்யப்பட்ட நாளில் நிலைமை {risk_word} ஆபத்தை எட்டுகிறது, மேலும் {peak_heat_hour} மணிக்கு அதிகபட்ச வெப்பம் {peak_heat_c_str} C வரை உயர்கிறது."
             else:
-                s1 = f"{city_locative} இன்று நிலைமை {risk_word} ஆபத்தை எட்டுகிறது, மேலும் {peak_heat_hour} மணிக்கு அதிகபட்ச WBGT {peak_heat_c_str} C வரை உயர்கிறது."
+                s1 = f"{city_locative} இன்று நிலைமை {risk_word} ஆபத்தை எட்டுகிறது, மேலும் {peak_heat_hour} மணிக்கு அதிகபட்ச வெப்பம் {peak_heat_c_str} C வரை உயர்கிறது."
             sentences_list.append(Sentence(s1, [peak_heat_eid]))
 
             # Sentence 2: Safe Work Windows
@@ -167,18 +171,26 @@ class TemplateAdvisor(Advisor):
                 s2 = f"வேலை செய்ய சிறந்த நேரம் {b.start} முதல் {b.end} வரை ஆகும் ({b_desc})."
                 sentences_list.append(Sentence(s2, [b_eid]))
             elif facts.no_safe_window:
-                s2 = "இன்று தொடர்ந்து வேலை செய்ய பாதுகாப்பான நேரம் இல்லை; வெப்பம் குறைந்த நேரத்தில் மட்டும் குறைந்த வேலை செய்யவும்."
+                day_word = "இந்த பதிவு செய்யப்பட்ட நாளில்" if facts.is_replay else "இன்று"
+                s2 = f"{day_word} தொடர்ந்து வேலை செய்ய பாதுகாப்பான நேரம் இல்லை; வெளியில் செய்யும் வேலையைக் குறைத்து கூடுதல் எச்சரிக்கையுடன் இருக்கவும்."
                 sentences_list.append(Sentence(s2, [peak_heat_eid]))
             else:
                 s2 = "வெப்பத்தின் போது வேலை வேகத்தை குறைத்து சீரான இடைவெளியில் ஓய்வெடுக்கவும்."
                 sentences_list.append(Sentence(s2, [peak_heat_eid]))
 
-            # Sentence 3: Avoid / Peak Heat Pacing
+            # Sentence 3: Avoid / Peak Heat or Air Pacing
             avoid_windows = [w for w in facts.windows if w.status == "AVOID"]
             if avoid_windows:
                 aw = avoid_windows[0]
-                aw_eid = get_hour_eid(aw.start, peak_heat_eid)
-                s3 = f"{aw.start} முதல் {aw.end} வரை கடுமையான வெப்பம் காரணமாக வெளியில் வேலை செய்வதைத் தவிர்க்கவும்."
+                is_air_avoid = aw.reason.startswith("AIR_")
+                if is_air_avoid:
+                    clean_h = aw.start.replace(":", "")
+                    cand_aqi = f"ev-aqi-{clean_h}"
+                    aw_eid = cand_aqi if cand_aqi in facts.evidence_id_to_numbers else (facts.peak_aqi_evidence_id or peak_heat_eid)
+                    s3 = f"{aw.start} முதல் {aw.end} வரை கடுமையான காற்று மாசுபாடு காரணமாக வெளியில் வேலை செய்வதைத் தவிர்க்கவும்."
+                else:
+                    aw_eid = get_hour_eid(aw.start, peak_heat_eid)
+                    s3 = f"{aw.start} முதல் {aw.end} வரை கடுமையான வெப்பம் காரணமாக வெளியில் வேலை செய்வதைத் தவிர்க்கவும்."
                 sentences_list.append(Sentence(s3, [aw_eid]))
             else:
                 s3 = "வெயிலில் தொடர்ந்து நிற்பதைத் தவிர்த்து அவ்வப்போது நிழலில் ஓய்வெடுக்கவும்."
@@ -201,11 +213,11 @@ class TemplateAdvisor(Advisor):
 
         else:
             # --- ENGLISH (Default) ---
-            # Sentence 1: Situation & Peak WBGT
+            # Sentence 1: Situation & Peak Heat
             if facts.is_replay:
-                s1 = f"On this recorded day {city_locative}, conditions reach {risk_word} risk with peak WBGT reaching {peak_heat_c_str} C at {peak_heat_hour}."
+                s1 = f"On this recorded day {city_locative}, conditions reach {risk_word} risk with peak heat reaching {peak_heat_c_str} C at {peak_heat_hour}."
             else:
-                s1 = f"Today {city_locative}, conditions reach {risk_word} risk with peak WBGT reaching {peak_heat_c_str} C at {peak_heat_hour}."
+                s1 = f"Today {city_locative}, conditions reach {risk_word} risk with peak heat reaching {peak_heat_c_str} C at {peak_heat_hour}."
             sentences_list.append(Sentence(s1, [peak_heat_eid]))
 
             # Sentence 2: Safe Work Windows
@@ -216,18 +228,26 @@ class TemplateAdvisor(Advisor):
                 s2 = f"Best work hours are {b.start} to {b.end} ({b_desc})."
                 sentences_list.append(Sentence(s2, [b_eid]))
             elif facts.no_safe_window:
-                s2 = "There is no safe continuous work window today; restrict duties to cooler early morning hours."
+                day_word = "on this recorded day" if facts.is_replay else "today"
+                s2 = f"There is no safe continuous work window {day_word}; minimize exposure and suspend non-essential outdoor tasks."
                 sentences_list.append(Sentence(s2, [peak_heat_eid]))
             else:
                 s2 = "Pace outdoor tasks moderately and take scheduled shaded recovery periods."
                 sentences_list.append(Sentence(s2, [peak_heat_eid]))
 
-            # Sentence 3: Avoid / Peak Heat Pacing
+            # Sentence 3: Avoid / Peak Heat or Air Pacing
             avoid_windows = [w for w in facts.windows if w.status == "AVOID"]
             if avoid_windows:
                 aw = avoid_windows[0]
-                aw_eid = get_hour_eid(aw.start, peak_heat_eid)
-                s3 = f"Avoid outdoor work between {aw.start} and {aw.end} due to extreme environmental heat stress."
+                is_air_avoid = aw.reason.startswith("AIR_")
+                if is_air_avoid:
+                    clean_h = aw.start.replace(":", "")
+                    cand_aqi = f"ev-aqi-{clean_h}"
+                    aw_eid = cand_aqi if cand_aqi in facts.evidence_id_to_numbers else (facts.peak_aqi_evidence_id or peak_heat_eid)
+                    s3 = f"Avoid outdoor work between {aw.start} and {aw.end} due to severe air pollution."
+                else:
+                    aw_eid = get_hour_eid(aw.start, peak_heat_eid)
+                    s3 = f"Avoid outdoor work between {aw.start} and {aw.end} due to extreme heat stress."
                 sentences_list.append(Sentence(s3, [aw_eid]))
             else:
                 s3 = "Minimize direct sun exposure and take brief shade breaks during peak hours."
@@ -357,8 +377,8 @@ class BedrockConverseAdvisor(Advisor):
             
             fallback_reason = f"Validation failed twice: {val_res_2.error}"
 
-        except (ClientError, Exception) as e:
-            fallback_reason = f"Bedrock invocation error: {str(e)}"
+        except Exception as e:  # noqa: BLE001
+            fallback_reason = f"Bedrock invocation error: {e!s}"
             logger.error("Bedrock call error: %s", fallback_reason)
 
         # Fallback to TemplateAdvisor
@@ -383,11 +403,10 @@ class StrandsAdvisor(Advisor):
         self.template_advisor = TemplateAdvisor()
 
     def advise(self, facts: Facts, language: str = "en") -> Advisory:
-        try:
-            from strands_agents import Agent # type: ignore
+        import importlib.util
+        if importlib.util.find_spec("strands_agents") is None:
             return self.bedrock_advisor.advise(facts, language=language)
-        except ImportError:
-            return self.bedrock_advisor.advise(facts, language=language)
+        return self.bedrock_advisor.advise(facts, language=language)
 
 
 def get_advisor(

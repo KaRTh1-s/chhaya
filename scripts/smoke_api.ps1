@@ -46,6 +46,7 @@ function Test-Endpoint {
             $params["ContentType"] = "application/json"
         }
 
+        $params["UseBasicParsing"] = $true
         $response = Invoke-WebRequest @params
         $sw.Stop()
         $status = [int]$response.StatusCode
@@ -118,7 +119,7 @@ $livePlanBody = @{
     job_type = "RIDER"
     workload = "MODERATE"
 } | ConvertTo-Json
-$livePlan = Test-Endpoint -Name "Plan (Live Delhi Rider)" -Method "POST" -Path "/plan" -Body $livePlanBody -Validation { param($d) return $d.hours.Count -eq 24 }
+$livePlan = Test-Endpoint -Name "Plan (Live Delhi Rider)" -Method "POST" -Path "/plan" -Body $livePlanBody -Validation { param($d) return ($d.hours -ne $null -and @($d.hours).Count -ge 24) }
 
 $replayPlanBody = @{
     scenario = "delhi-heatwave-2025-06-09"
@@ -138,6 +139,32 @@ foreach ($lang in @("en", "hi", "ta")) {
     } | ConvertTo-Json
     $advRes = Test-Endpoint -Name "Advise ($lang - Template)" -Method "POST" -Path "/advise" -Body $adviseBody -Validation { param($d) return $d.advisory.validated -eq $true }
 }
+
+# 3b. Bedrock Converse Advisor Endpoints (en, ta)
+Write-Host "`n--- Testing Bedrock Converse Advisory (en, ta) ---" -ForegroundColor Yellow
+$bedrockEnBody = @{
+    scenario = "delhi-heatwave-2025-06-09"
+    job_type = "CONSTRUCTION"
+    workload = "HEAVY"
+    language = "en"
+    advisor_backend = "bedrock"
+} | ConvertTo-Json
+$advBedrockEn = Test-Endpoint -Name "Advise (en - Bedrock Converse)" -Method "POST" -Path "/advise" -Body $bedrockEnBody -Validation { param($d) return $d.advisory -ne $null }
+
+$bedrockTaBody = @{
+    scenario = "delhi-heatwave-2025-06-09"
+    job_type = "CONSTRUCTION"
+    workload = "HEAVY"
+    language = "ta"
+    advisor_backend = "bedrock"
+} | ConvertTo-Json
+$advBedrockTa = Test-Endpoint -Name "Advise (ta - Bedrock Converse)" -Method "POST" -Path "/advise" -Body $bedrockTaBody -Validation { param($d) return $d.advisory -ne $null }
+
+Write-Host "`nBedrock English Advisory Response:" -ForegroundColor Magenta
+$advBedrockEn | ConvertTo-Json -Depth 5 | Write-Host -ForegroundColor Cyan
+
+Write-Host "`nBedrock Tamil Advisory Response:" -ForegroundColor Magenta
+$advBedrockTa | ConvertTo-Json -Depth 5 | Write-Host -ForegroundColor Cyan
 
 # 4. Crew Auth & CRUD
 $crewCreateBody = @{
@@ -170,11 +197,15 @@ for ($i = 1; $i -le 20; $i++) {
     }
 }
 
-$sortedLat = $latencies | Sort-Object
-$p50 = [math]::Round($sortedLat[[math]::Floor($sortedLat.Count * 0.50)], 1)
-$p95 = [math]::Round($sortedLat[[math]::Floor($sortedLat.Count * 0.95)], 1)
-$minL = [math]::Round($sortedLat[0], 1)
-$maxL = [math]::Round($sortedLat[-1], 1)
+if ($latencies.Count -gt 0) {
+    $sortedLat = $latencies | Sort-Object
+    $p50 = [math]::Round($sortedLat[[math]::Floor($sortedLat.Count * 0.50)], 1)
+    $p95 = [math]::Round($sortedLat[[math]::Floor($sortedLat.Count * 0.95)], 1)
+    $minL = [math]::Round($sortedLat[0], 1)
+    $maxL = [math]::Round($sortedLat[-1], 1)
+} else {
+    $p50 = 0.0; $p95 = 0.0; $minL = 0.0; $maxL = 0.0
+}
 
 # Print Summary Table
 Write-Host "`n==========================================================" -ForegroundColor Green

@@ -9,32 +9,28 @@ Covers:
 - Audit event privacy (no text, no PII)
 - End-to-end POST /advise routing
 """
-from datetime import UTC, datetime
 import json
 import os
+from datetime import datetime
 from unittest.mock import MagicMock
 
 import boto3
-from moto import mock_aws
 import pytest
+from chhaya_engine.models import JobType, create_worker_profile
+from chhaya_engine.planner import plan_day
+from chhaya_engine.scenarios import get_scenario, load_scenario_readings
+from moto import mock_aws
 
 from chhaya_backend.agent.advisors import (
-    Advisory,
     BedrockConverseAdvisor,
-    Sentence,
     StrandsAdvisor,
     TemplateAdvisor,
     get_advisor,
 )
-from chhaya_backend.agent.facts import Facts, build_facts_from_plan
-from chhaya_backend.agent.i18n import get_seek_help_lines
-from chhaya_backend.agent.prompts import build_user_prompt
+from chhaya_backend.agent.facts import build_facts_from_plan
 from chhaya_backend.agent.validator import is_valid_script, validate_advisory_json
 from chhaya_backend.router import Router
 from chhaya_backend.store import DynamoDBStore
-from chhaya_engine.models import JobType, create_worker_profile
-from chhaya_engine.planner import plan_day
-from chhaya_engine.scenarios import get_scenario, load_scenario_readings
 
 
 def get_test_plan(scenario_id: str, job_type: str):
@@ -384,10 +380,10 @@ def test_bedrock_advisor_fallback_on_client_exception():
 # 6. Daily LLM call cap fallback
 def test_daily_call_cap_enforcement(mock_store):
     # Set cap to 2 calls
-    adv1, reason1 = get_advisor(store=mock_store, max_calls_per_day=2, advisor_mode="converse")
+    _adv1, reason1 = get_advisor(store=mock_store, max_calls_per_day=2, advisor_mode="converse")
     assert reason1 is None
     
-    adv2, reason2 = get_advisor(store=mock_store, max_calls_per_day=2, advisor_mode="converse")
+    _adv2, reason2 = get_advisor(store=mock_store, max_calls_per_day=2, advisor_mode="converse")
     assert reason2 is None
     
     # 3rd call reaches cap
@@ -519,6 +515,7 @@ def test_validator_rejects_raw_code_and_enum_words():
 # 11. Test: Scenario ID, fixture _meta date, and openapi.yaml parity
 def test_scenario_id_fixture_date_and_openapi_parity():
     from pathlib import Path
+
     from chhaya_engine.scenarios import SCENARIOS
 
     fixtures_dir = Path(__file__).resolve().parent.parent.parent / "engine" / "tests" / "fixtures"
@@ -544,6 +541,83 @@ def test_heatwave_wbgt_peak_sanity_bound():
     plan = get_test_plan("delhi-heatwave-2025-06-09", "CONSTRUCTION")
     facts = build_facts_from_plan(plan)
 
-    # Outdoor WBGT in dry heat at Ta <= 45 C should be between 31.0 and 35.0 C
+    # Outdoor WBGT in dry heat at Ta <= 45 C should be between 30.0 and 35.0 C
     assert 30.0 <= facts.peak_heat_c <= 35.0, f"Peak WBGT {facts.peak_heat_c} C outside physical sanity bounds [30, 35]"
+
+
+# 13. Test: Separate heat and air risk attribution in advisories
+def test_separate_heat_and_air_risk_attribution():
+    advisor = TemplateAdvisor()
+
+    # Part A: Air-driven avoidance (Delhi heatwave has severe air pollution AQI 500 triggering AIR_SEVERE_AVOID)
+    air_plan = get_test_plan("delhi-heatwave-2025-06-09", "CONSTRUCTION")
+    air_facts = build_facts_from_plan(air_plan)
+    
+    # English Air Avoid
+    adv_en = advisor.advise(air_facts, language="en")
+    assert adv_en.validated is True
+    s_avoid = next(s for s in adv_en.sentences if "Avoid outdoor work" in s.text)
+    assert "air pollution" in s_avoid.text.lower()
+    assert "heat stress" not in s_avoid.text.lower()
+    assert any("aqi" in eid.lower() for eid in s_avoid.evidence_ids)
+
+    # Hindi Air Avoid
+    adv_hi = advisor.advise(air_facts, language="hi")
+    s_avoid_hi = next(s for s in adv_hi.sentences if "बचें" in s.text)
+    assert "वायु प्रदूषण" in s_avoid_hi.text
+    assert "गर्मी" not in s_avoid_hi.text
+
+    # Tamil Air Avoid
+    adv_ta = advisor.advise(air_facts, language="ta")
+    s_avoid_ta = next(s for s in adv_ta.sentences if "தவிர்க்கவும்" in s.text)
+    assert "காற்று மாசுபாடு" in s_avoid_ta.text
+    assert "வெப்பம்" not in s_avoid_ta.text
+
+    # Part B: Heat-driven avoidance (Chennai humid day has HEAT_WBGT_OVER_LIMIT, AQI is satisfactory)
+    heat_plan = get_test_plan("chennai-humid-2025-05-31", "CONSTRUCTION")
+    heat_facts = build_facts_from_plan(heat_plan)
+    
+    adv_heat_en = advisor.advise(heat_facts, language="en")
+    assert adv_heat_en.validated is True
+    s_heat_avoid = next(s for s in adv_heat_en.sentences if "Avoid outdoor work" in s.text)
+    assert "heat stress" in s_heat_avoid.text.lower()
+    assert "air pollution" not in s_heat_avoid.text.lower()
+    assert any("wbgt" in eid.lower() for eid in s_heat_avoid.evidence_ids)
+
+
+# 14. Test: No safe window does not recommend early morning when morning is hazardous
+def test_no_safe_window_does_not_recommend_early_morning():
+    plan = get_test_plan("delhi-heatwave-2025-06-09", "CONSTRUCTION")
+    facts = build_facts_from_plan(plan)
+    # Simulate extreme day where no_safe_window is True
+    object.__setattr__(facts, "no_safe_window", True)
+    object.__setattr__(facts, "recommended_blocks", [])
+
+    advisor = TemplateAdvisor()
+    adv = advisor.advise(facts, language="en")
+    assert adv.validated is True
+    s2 = adv.sentences[1].text
+    assert "cooler early morning" not in s2.lower()
+    assert "no safe continuous work window" in s2.lower()
+
+
+# 15. Test: No raw WBGT technical jargon in worker-facing sentences
+@pytest.mark.parametrize("scenario_id", [
+    "delhi-heatwave-2025-06-09",
+    "delhi-smog-2025-11-23",
+    "chennai-humid-2025-05-31",
+    "coimbatore-mild-2025-01-15",
+])
+@pytest.mark.parametrize("job_type", ["RIDER", "CONSTRUCTION"])
+@pytest.mark.parametrize("lang", ["en", "hi", "ta"])
+def test_no_wbgt_acronym_in_worker_sentences(scenario_id: str, job_type: str, lang: str):
+    plan = get_test_plan(scenario_id, job_type)
+    facts = build_facts_from_plan(plan)
+    advisor = TemplateAdvisor()
+    advisory = advisor.advise(facts, language=lang)
+    assert advisory.validated is True
+    for s in advisory.sentences:
+        # WBGT acronym should be reserved for technical evidence cards/charts, not worker-facing text
+        assert "WBGT" not in s.text, f"Sentence contains technical acronym 'WBGT': {s.text}"
+
 

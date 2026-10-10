@@ -23,33 +23,41 @@ PM10_BREAKPOINTS = [
     (431, 600, 401, 500)  # Severe
 ]
 
+import math
+
+
 def _calc_subindex(conc: float, breakpoints: list[tuple[float, float, int, int]]) -> float:
-    for blo, bhi, ilo, ihi in breakpoints:
+    if conc < 0:
+        return 0.0
+    for i, (blo, bhi, ilo, ihi) in enumerate(breakpoints):
         if blo <= conc <= bhi:
-            # Linear interpolation
             if bhi == blo:
-                return ilo
+                return float(ilo)
             return ilo + (ihi - ilo) / (bhi - blo) * (conc - blo)
-    # If above max range, clamp to 500 (or max possible for severe tier)
-    _, bhi, ilo, ihi = breakpoints[-1]
-    if conc > bhi:
-        return ihi # clamp to 500
-    # Fallback clamp for upper range
-    return breakpoints[-1][3]
+        # Handle intermediate float concentrations between discrete integer breakpoints
+        if i > 0 and breakpoints[i - 1][1] < conc < blo:
+            prev_bhi = breakpoints[i - 1][1]
+            prev_ihi = breakpoints[i - 1][3]
+            return prev_ihi + (ilo - prev_ihi) * (conc - prev_bhi) / (blo - prev_bhi)
+            
+    # If above max range, clamp to 500.0 (CPCB upper boundary)
+    if conc > breakpoints[-1][1]:
+        return float(breakpoints[-1][3])
+    return float(breakpoints[0][2])
 
 
 def calculate_aqi(reading: HourlyReading) -> float | None:
     subindices = []
-    if reading.pm2_5 is not None:
+    if reading.pm2_5 is not None and not math.isnan(reading.pm2_5):
         subindices.append(_calc_subindex(reading.pm2_5, PM25_BREAKPOINTS))
-    if reading.pm10 is not None:
+    if reading.pm10 is not None and not math.isnan(reading.pm10):
         subindices.append(_calc_subindex(reading.pm10, PM10_BREAKPOINTS))
     
     if not subindices:
         return None
     
     aqi = max(subindices)
-    return min(aqi, 500.0) # Clamp above 500
+    return min(max(aqi, 0.0), 500.0)
 
 def get_aqi_category(aqi: float) -> str:
     if aqi <= 50: return "Good"
