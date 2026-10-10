@@ -14,6 +14,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Global keyboard shortcuts navigation hook (`g` then `h/b/a/p/c/u/r/s/d`, `/` focus plan, `?` help, `Esc` dismiss).
 - Unit and integration test suite (14 passing tests) covering components, mock fallback, ARIA accessibility labels, and honest counter handling.
 
+## [0.3.0] - 2026-10-10
+### Added
+- Plain-language worker Advisory Agent endpoint `POST /advise` with multilingual support in English (`en`), Hindi (`hi`), and Tamil (`ta`).
+- Grounded `TemplateAdvisor` generating deterministic, verifiable shift advice with zero network dependencies.
+- `BedrockConverseAdvisor` supporting Amazon Bedrock Converse API with prompt versioning (`1.0.0`), 1-retry with error feedback, and graceful fallback to templates.
+- Strict `validate_advisory_json` grounding pipeline verifying 1-5 sentence count, valid evidence card citations, absence of hallucinated numbers (`allowed_numbers` set matching), Devanagari/Tamil script compliance, and medical claim blocklist.
+- Split Lambda architecture in SAM template (`ApiFunction` for fast sub-20ms cold starts, `AdvisorFunction` for Bedrock / AI SDK execution).
+- Daily LLM call cost limiter via atomic DynamoDB counter (`MAX_LLM_CALLS_PER_DAY=300`) with automatic `daily_cap` fallback.
+- PowerShell helper `scripts/try_advisor.ps1` for local and live advisor verification.
+- 48 parameter matrix test suite covering all fixtures $\times$ job types $\times$ languages.
+
+## [0.2.1] - 2026-10-10
+### Added
+- Structured hydration guidance in `DayPlan` and `HourPlan.hydration` ("NORMAL" | "FREQUENT") derived strictly from heat stress without air-pollution false triggers.
+- Replay scenarios endpoint `GET /scenarios` returning 4 historical high-impact Indian weather days.
+- `POST /plan` scenario replay mode anchoring evaluation date and returning source tracking metadata (`data_source`, `scenario_id`, `recorded_date`).
+- `GET /board?mode=replay` matrix evaluation over all 4 recorded scenarios.
+- Dev-only calibration script `scripts/calibrate_wbgt.py` against Liljegren outdoor reference model (`thermofeel`).
+- Automated response hygiene tests asserting no DynamoDB storage keys (`pk`, `sk`, `ttl`) leak to callers.
+
+### Changed
+- Calibrated WBGT model with `SOLAR_ADJ_C_PER_KW_M2 = 2.0` and `CALIBRATION_OFFSET_C = -4.5`, reducing hot-dry mean bias from +4.76°C to +0.06°C.
+- `recommended_blocks` algorithm selects up to 2 non-overlapping blocks minimizing combined risk (WORK > CAUTION > REDUCED, never AVOID) with block status reflecting worst hour inside.
+- `/stats` honesty: counters start at 0 in production and demo seeding is gated strictly on `CHHAYA_SEED_DEMO=1`.
+
 ## [0.2.0] - 2026-10-10
 ### Added
 - AWS SAM Backend infrastructure on Lambda (`python3.11`, `arm64`), HTTP API Gateway v2, and DynamoDB.

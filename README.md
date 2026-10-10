@@ -68,12 +68,25 @@ $crewBody = @{
 Invoke-RestMethod -Uri "http://localhost:8787/crews" -Method Post -Headers @{"X-Chhaya-Passcode"="demo"} -Body $crewBody -ContentType "application/json"
 ```
 
-### 7. List Registered Crews
+### 7. Generate Plain-Language Advisory (/advise)
+```powershell
+$adviseBody = @{
+    scenario = "delhi-heatwave-2025-06-09"
+    job_type = "CONSTRUCTION"
+    workload = "HEAVY"
+    language = "hi"
+    advisor_backend = "template"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://localhost:8787/advise" -Method Post -Body $adviseBody -ContentType "application/json"
+```
+
+### 8. List Registered Crews
 ```powershell
 Invoke-RestMethod -Uri "http://localhost:8787/crews" -Method Get
 ```
 
-### 8. Query Audit Trail
+### 9. Query Audit Trail
 ```powershell
 Invoke-RestMethod -Uri "http://localhost:8787/audit?limit=5" -Method Get
 ```
@@ -83,7 +96,8 @@ Invoke-RestMethod -Uri "http://localhost:8787/audit?limit=5" -Method Get
 ```powershell
 .\scripts\build_backend.ps1
 ```
-This packages `chhaya_engine` alongside the backend handler into `backend/build/` ready for SAM deployment.
+This packages both `ApiFunction` (`backend/build/`) and `AdvisorFunction` (`backend/build_advisor/`) ready for AWS SAM deployment.
+
 
 ## Web Application (Vite + React + TypeScript)
 

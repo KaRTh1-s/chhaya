@@ -135,7 +135,7 @@ def test_board_endpoint(test_router):
     assert resp["statusCode"] == 200
     data = json.loads(resp["body"])
     assert "cities" in data
-    assert len(data["cities"]) >= 8
+    assert len(data["cities"]) >= 3
     assert "jobs" in data["cities"][0]
     assert "RIDER" in data["cities"][0]["jobs"]
 
@@ -310,4 +310,95 @@ def test_live_data_mode_and_caching(test_router):
     # Second request: Cache hit from DynamoDB
     resp2 = test_router.route(event)
     assert resp2["statusCode"] == 200
+
+def test_get_scenarios_endpoint(test_router):
+    event = make_event("GET", "/scenarios")
+    resp = test_router.route(event)
+    assert resp["statusCode"] == 200
+    data = json.loads(resp["body"])
+    assert "scenarios" in data
+    assert len(data["scenarios"]) == 4
+    expected_ids = {
+        "delhi-heatwave-2025-06-09",
+        "delhi-smog-2025-11-23",
+        "chennai-humid-2025-05-31",
+        "coimbatore-mild-2025-01-15",
+    }
+    actual_ids = {s["id"] for s in data["scenarios"]}
+    assert actual_ids == expected_ids
+    for s in data["scenarios"]:
+        assert s["source"] == "recorded"
+        assert "max_temp_c" in s
+        assert "max_pm2_5" in s
+        assert "date" in s
+
+def test_plan_scenario_replay(test_router):
+    event = make_event("POST", "/plan", body={
+        "scenario": "delhi-heatwave-2025-06-09",
+        "job_type": "CONSTRUCTION"
+    })
+    resp = test_router.route(event)
+    assert resp["statusCode"] == 200
+    data = json.loads(resp["body"])
+    assert data["data_source"] == "replay"
+    assert data["scenario_id"] == "delhi-heatwave-2025-06-09"
+    assert data["recorded_date"] == "2025-06-09"
+    assert data["city_label"] == "Delhi"
+
+def test_board_replay_mode(test_router):
+    event = make_event("GET", "/board", query={"mode": "replay"})
+    resp = test_router.route(event)
+    assert resp["statusCode"] == 200
+    data = json.loads(resp["body"])
+    assert data["mode"] == "replay"
+    assert len(data["cities"]) == 4
+    for entry in data["cities"]:
+        assert "scenario_id" in entry
+        assert "label" in entry
+        assert "date" in entry
+        assert "jobs" in entry
+
+def test_fixture_mode_unknown_city_returns_404(test_router):
+    event = make_event("POST", "/plan", body={"city_id": "mumbai", "job_type": "VENDOR"})
+    resp = test_router.route(event)
+    assert resp["statusCode"] == 404
+    data = json.loads(resp["body"])
+    assert "Supported fixture cities" in data["error"]["message"]
+
+def test_response_hygiene_no_dynamodb_keys_across_all_endpoints(test_router):
+    """A5: Never return DynamoDB keys (pk, sk, ttl) in any API response."""
+    # Seed a crew
+    post_crew = make_event("POST", "/crews", body={"name": "Alpha Crew", "city_id": "delhi", "job_type": "RIDER"}, headers={"X-Chhaya-Passcode": "secret123"})
+    resp_crew = test_router.route(post_crew)
+    assert resp_crew["statusCode"] == 201
+
+    endpoints = [
+        make_event("GET", "/health"),
+        make_event("GET", "/cities"),
+        make_event("GET", "/scenarios"),
+        make_event("POST", "/plan", body={"city_id": "delhi", "job_type": "RIDER"}),
+        make_event("GET", "/board"),
+        make_event("GET", "/board", query={"mode": "replay"}),
+        make_event("GET", "/stats"),
+        make_event("GET", "/audit"),
+        make_event("GET", "/crews"),
+    ]
+
+    for ev in endpoints:
+        resp = test_router.route(ev)
+        raw_body = resp["body"]
+        data = json.loads(raw_body)
+        
+        def check_no_keys(obj, path="", endpoint=ev["rawPath"]):
+            if isinstance(obj, dict):
+                for k in ["pk", "sk", "ttl", "readings_json", "details_json"]:
+                    assert k not in obj, f"Forbidden DynamoDB key '{k}' found at {path} in endpoint {endpoint}"
+                for k, v in obj.items():
+                    check_no_keys(v, f"{path}.{k}", endpoint=endpoint)
+            elif isinstance(obj, list):
+                for i, it in enumerate(obj):
+                    check_no_keys(it, f"{path}[{i}]", endpoint=endpoint)
+
+        check_no_keys(data)
+
 

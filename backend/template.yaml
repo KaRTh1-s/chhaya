@@ -111,6 +111,52 @@ Resources:
             Path: /
             Method: ANY
 
+  AdvisorFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/chhaya-advisor-${AWS::StackName}"
+      RetentionInDays: 14
+
+  # Split Lambda Architecture:
+  # - ApiFunction stays ~zero-dependency (<20ms cold start) for fast hourly plan calculations & live board
+  # - AdvisorFunction packages AI/LLM SDKs (Bedrock/Strands) with 1024MB RAM and 30s timeout without bloating core API
+  AdvisorFunction:
+    Type: AWS::Serverless::Function
+    DependsOn:
+      - AdvisorFunctionLogGroup
+    Properties:
+      FunctionName: !Sub "chhaya-advisor-${AWS::StackName}"
+      CodeUri: ./build_advisor/
+      Handler: advisor.handler
+      MemorySize: 1024
+      Timeout: 30
+      Environment:
+        Variables:
+          CHHAYA_TABLE: !Ref DataTable
+          WRITE_PASSCODE: !Ref WritePasscode
+          CORS_ORIGIN: !Ref CorsOrigin
+          APP_VERSION: !Ref AppVersion
+          CHHAYA_DATA_MODE: !Ref DataMode
+          BEDROCK_MODEL_ID: "apac.amazon.nova-micro-v1:0"
+          BEDROCK_REGION: "ap-south-1"
+          ADVISOR_MODE: "auto"
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DataTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "bedrock:InvokeModel"
+                - "bedrock:InvokeModelWithResponseStream"
+              Resource: "*"
+      Events:
+        AdviseRoute:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /advise
+            Method: POST
+
 Outputs:
   ApiUrl:
     Description: Base URL for Chhaya HTTP API
@@ -118,3 +164,4 @@ Outputs:
   TableName:
     Description: DynamoDB Table Name
     Value: !Ref DataTable
+

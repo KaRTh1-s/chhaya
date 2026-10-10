@@ -2,7 +2,8 @@ import math
 
 from chhaya_engine.models import HourlyReading, SunExposure
 
-SOLAR_ADJ_C_PER_KW_M2 = 3.0
+SOLAR_ADJ_C_PER_KW_M2 = 2.0
+CALIBRATION_OFFSET_C = -4.5
 
 def calculate_wbgt(reading: HourlyReading, sun_exposure: SunExposure) -> float:
     T = reading.temp_c
@@ -12,8 +13,8 @@ def calculate_wbgt(reading: HourlyReading, sun_exposure: SunExposure) -> float:
     # Vapour pressure e (hPa)
     e = (rh / 100.0) * 6.105 * math.exp(17.27 * T / (237.7 + T))
 
-    # Australian Bureau of Meteorology approximation for WBGT in shade
-    wbgt_shade = 0.567 * T + 0.393 * e + 3.94
+    # Australian Bureau of Meteorology approximation calibrated against Liljegren outdoor WBGT
+    wbgt_shade = 0.567 * T + 0.393 * e + 3.94 + CALIBRATION_OFFSET_C
 
     # Solar adjustment
     factor = 1.0
