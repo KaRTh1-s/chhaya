@@ -1,4 +1,4 @@
-import type { Advisory, CityBoardSummary, DayPlan, Language } from '../api/types';
+import type { Advisory, BoardCity, DayPlan, Language } from '../api/types';
 
 export function formatWhatsAppText(
   plan: DayPlan,

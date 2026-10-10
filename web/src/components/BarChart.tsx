@@ -1,9 +1,9 @@
 import React from 'react';
-import type { RiskLevel } from '../api/types';
+import type { HourStatus } from '../api/types';
 
 export interface BarChartItem {
   label: string;
-  counts: Record<RiskLevel, number>;
+  counts: Record<HourStatus, number>;
   totalHours: number;
 }
 
@@ -12,7 +12,7 @@ interface BarChartProps {
   height?: number;
 }
 
-const RISK_COLORS: Record<RiskLevel, string> = {
+const RISK_COLORS: Record<HourStatus, string> = {
   WORK: 'var(--color-risk-work, #10b981)',
   CAUTION: 'var(--color-risk-caution, #3b82f6)',
   REDUCED: 'var(--color-risk-reduced, #eab308)',
@@ -20,7 +20,8 @@ const RISK_COLORS: Record<RiskLevel, string> = {
   REST: 'var(--color-risk-rest, #ef4444)',
 };
 
-const RISK_ORDER: RiskLevel[] = ['WORK', 'CAUTION', 'REDUCED', 'AVOID', 'REST'];
+const RISK_ORDER: HourStatus[] = ['WORK', 'CAUTION', 'REDUCED', 'AVOID', 'REST'];
+
 
 export const BarChart: React.FC<BarChartProps> = ({ data, height = 220 }) => {
   if (!data || data.length === 0) {
