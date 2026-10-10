@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { client } from '../api/client';
 import type { AssumptionItem } from '../api/types';
 import { LoadingSkeleton, ErrorState } from '../components/Feedback';
+import mockAdvisories from '../api/mock-data/advisories.json';
 
 export const Safety: React.FC = () => {
   const [assumptions, setAssumptions] = useState<AssumptionItem[]>([]);
@@ -99,7 +100,7 @@ export const Safety: React.FC = () => {
                 Step 3: Metabolic Workload Thresholds
               </div>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
-                Continuous exertion limits adapted from NIOSH & ISO occupational thermal criteria (Light: 30°C, Moderate: 28°C, Heavy: 26°C WBGT).
+                conservative working defaults chosen by the team; not yet validated against ISO 7243, NIOSH or ACGIH criteria; see the Status column.
               </p>
             </div>
 
@@ -190,7 +191,7 @@ export const Safety: React.FC = () => {
           {error && <ErrorState title="Assumptions Table Error" message={error} onRetry={() => {}} />}
 
           {!loading && !error && (
-            <div style={{ overflowX: 'auto' }}>
+            <div style={{ overflowX: 'auto' }} tabIndex={0} role="region" aria-label="Assumptions matrix table">
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                 <thead>
                   <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--border)' }}>
@@ -217,12 +218,23 @@ export const Safety: React.FC = () => {
                             borderRadius: '4px',
                             fontSize: '0.75rem',
                             fontWeight: 600,
-                            background: item.status?.includes('Calibrated') ? 'rgba(234, 179, 8, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                            color: item.status?.includes('Calibrated') ? '#facc15' : '#34d399',
-                            whiteSpace: 'nowrap',
+                            background:
+                              item.status?.toLowerCase().includes('not') || item.status?.toLowerCase().includes('to verify')
+                                ? 'rgba(249, 115, 22, 0.15)'
+                                : item.status?.toLowerCase().includes('calibrated')
+                                ? 'rgba(234, 179, 8, 0.15)'
+                                : 'rgba(16, 185, 129, 0.15)',
+                            color:
+                              item.status?.toLowerCase().includes('not') || item.status?.toLowerCase().includes('to verify')
+                                ? '#fb923c'
+                                : item.status?.toLowerCase().includes('calibrated')
+                                ? '#facc15'
+                                : '#34d399',
+                            whiteSpace: 'normal',
+                            display: 'inline-block',
                           }}
                         >
-                          {item.status?.includes('Calibrated') ? 'Calibrated' : 'Verified'}
+                          {item.status || 'To verify'}
                         </span>
                       </td>
                     </tr>
@@ -253,7 +265,7 @@ export const Safety: React.FC = () => {
                 🗣️ Multilingual Validation Status
               </strong>
               <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
-                Hindi (हिन्दी) and Tamil (தமிழ்) translation strings are verified computationally against Unicode block validators and medical blocklists, but remain pending native clinical field pilot reviews.
+                Hindi (हिन्दी) and Tamil (தமிழ்) translation strings are verified computationally against Unicode block validators and medical blocklists, but remain pending native occupational field reviews.
               </p>
             </div>
 
@@ -268,7 +280,7 @@ export const Safety: React.FC = () => {
           </div>
         </section>
 
-        {/* Section 5: Emergency Heat Protocol */}
+        {/* Section 5: Emergency Guidance */}
         <section
           className="card"
           style={{
@@ -280,33 +292,26 @@ export const Safety: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
             <span style={{ fontSize: '1.6rem' }}>🚨</span>
             <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f87171', margin: 0 }}>
-              Heat Stroke Emergency Protocol (National Helpline: 108)
+              Emergency Guidance
             </h2>
           </div>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', lineHeight: 1.5, marginBottom: '1.25rem' }}>
-            Heat stroke is a medical emergency with high mortality if untreated. Recognize the warning signs immediately:
+          <p style={{ fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: 1.5, marginBottom: '1.25rem', fontWeight: 600 }}>
+            In an emergency call 112 (India's emergency number). In many states 108 also reaches an ambulance.
           </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-            <div style={{ background: 'var(--surface-1)', padding: '1rem', borderRadius: 'var(--radius-sm)' }}>
-              <strong style={{ display: 'block', color: '#f87171', fontSize: '0.85rem', marginBottom: '0.25rem' }}>1. Recognize Symptoms</strong>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Confusion, slurred speech, hot dry red skin, loss of consciousness, or seizures.</span>
+          <div style={{ background: 'var(--surface-1)', padding: '1.25rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+            <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+              First Aid / When to Seek Immediate Medical Help (From Advisory Engine)
             </div>
-
-            <div style={{ background: 'var(--surface-1)', padding: '1rem', borderRadius: 'var(--radius-sm)' }}>
-              <strong style={{ display: 'block', color: '#f87171', fontSize: '0.85rem', marginBottom: '0.25rem' }}>2. Immediate Relocation</strong>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Move the worker instantly into shade or an air-conditioned dispatch room.</span>
-            </div>
-
-            <div style={{ background: 'var(--surface-1)', padding: '1rem', borderRadius: 'var(--radius-sm)' }}>
-              <strong style={{ display: 'block', color: '#f87171', fontSize: '0.85rem', marginBottom: '0.25rem' }}>3. Active Cooling</strong>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Douse clothing with cold water, apply ice packs to neck/armpits, and fan vigorously.</span>
-            </div>
-
-            <div style={{ background: 'var(--surface-1)', padding: '1rem', borderRadius: 'var(--radius-sm)' }}>
-              <strong style={{ display: 'block', color: '#f87171', fontSize: '0.85rem', marginBottom: '0.25rem' }}>4. Dial 108 Immediately</strong>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Request an emergency ambulance and keep monitoring airway and responsiveness.</span>
-            </div>
+            <ul style={{ margin: 0, paddingLeft: '1.25rem', color: 'var(--text-primary)', fontSize: '0.875rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {(
+                (mockAdvisories as Record<string, Record<string, { seek_help?: string[] }>>)['delhi-heatwave-2025-06-09']?.['en']?.seek_help || [
+                  'Stop work, move to shade, and call emergency services if you experience confusion, fainting, or stop sweating.',
+                ]
+              ).map((line, idx) => (
+                <li key={idx}>{line}</li>
+              ))}
+            </ul>
           </div>
         </section>
       </div>

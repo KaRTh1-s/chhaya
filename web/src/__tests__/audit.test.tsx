@@ -40,10 +40,10 @@ describe('Audit Page', () => {
     });
 
     // Look for filter button
-    const advisoryFilterBtn = screen.getByRole('button', { name: 'ADVISORY_PROMPTED' });
+    const advisoryFilterBtn = screen.getByRole('button', { name: 'ADVISORY_GENERATED' });
     fireEvent.click(advisoryFilterBtn);
 
-    expect(screen.getAllByText('ADVISORY_PROMPTED').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('ADVISORY_GENERATED').length).toBeGreaterThan(0);
   });
 
   it('expands and displays JSON payload on toggle', async () => {

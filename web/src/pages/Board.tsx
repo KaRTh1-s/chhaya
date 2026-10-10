@@ -83,7 +83,7 @@ export const BoardPage: React.FC = () => {
         <Kicker>REGIONAL EXPOSURE MATRIX</Kicker>
         <SerifHeading level={1} size="display" text="National Heat &amp; Smog *Risk Board.*" />
         <p style={{ maxWidth: '680px', marginTop: 'var(--space-2)', fontSize: '1.1rem', color: 'var(--color-ink-muted)' }}>
-          Real-time thermal exposure and 12-hour peak risk projections across 12 Indian urban hubs and historical replay scenarios.
+          Hourly modelled thermal exposure and 12-hour peak risk projections across 12 Indian urban hubs and historical replay scenarios.
         </p>
       </div>
 
@@ -210,7 +210,7 @@ export const BoardPage: React.FC = () => {
                 {/* City Card Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                   <div>
-                    <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.6rem', margin: 0 }}>{city.city_name}</h3>
+                    <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.6rem', margin: 0 }}>{city.city_name}</h2>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-ink-muted)', marginTop: '2px' }}>
                       Dominant: {city.dominant_factor || 'HEAT'} &middot; Active Crews: {city.active_crews}
                     </div>

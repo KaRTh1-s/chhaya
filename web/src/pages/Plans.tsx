@@ -69,6 +69,7 @@ export const PlansPage: React.FC = () => {
   const [plan, setPlan] = useState<DayPlan | null>(null);
   const [advisory, setAdvisory] = useState<Advisory | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [formCollapsed, setFormCollapsed] = useState<boolean>(false);
 
   // Fetch Cities and Scenarios on mount
   useEffect(() => {
@@ -282,277 +283,315 @@ export const PlansPage: React.FC = () => {
 
       {/* PLANNER CONFIGURATION FORM */}
       <Card variant="beige" style={{ marginBottom: 'var(--space-8)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-forest)', textTransform: 'uppercase' }}>
-            Shift Parameters
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: formCollapsed && plan ? '0' : '16px', flexWrap: 'wrap', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-forest)', textTransform: 'uppercase' }}>
+              Shift Parameters
+            </span>
+            {plan && (
+              <button
+                type="button"
+                onClick={() => setFormCollapsed(!formCollapsed)}
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.75rem',
+                  padding: '2px 8px',
+                  borderRadius: 'var(--radius-pill)',
+                  border: '1px solid var(--color-forest)',
+                  backgroundColor: 'transparent',
+                  color: 'var(--color-forest)',
+                  cursor: 'pointer',
+                }}
+                aria-expanded={!formCollapsed}
+                aria-label={formCollapsed ? 'Expand shift parameters' : 'Collapse shift parameters'}
+              >
+                {formCollapsed ? '▼ Edit Parameters' : '▲ Hide Form'}
+              </button>
+            )}
           </div>
 
           {/* Mode Toggle: Live vs Replay */}
-          <div style={{ display: 'flex', gap: '4px', backgroundColor: 'rgba(27,27,27,0.06)', padding: '3px', borderRadius: 'var(--radius-pill)' }}>
-            <button
-              type="button"
-              onClick={() => {
-                setMode('live');
-                setGeoLoc(null);
-              }}
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.75rem',
-                padding: '4px 14px',
-                borderRadius: 'var(--radius-pill)',
-                border: 'none',
-                backgroundColor: mode === 'live' ? '#FFFFFF' : 'transparent',
-                fontWeight: mode === 'live' ? 600 : 400,
-                cursor: 'pointer',
-              }}
-            >
-              Live Forecast
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('replay')}
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.75rem',
-                padding: '4px 14px',
-                borderRadius: 'var(--radius-pill)',
-                border: 'none',
-                backgroundColor: mode === 'replay' ? '#FFFFFF' : 'transparent',
-                fontWeight: mode === 'replay' ? 600 : 400,
-                cursor: 'pointer',
-              }}
-            >
-              Recorded Replay
-            </button>
-          </div>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
-          {/* City / Scenario Picker */}
-          {mode === 'live' ? (
-            <div>
-              <label htmlFor="city-select" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginBottom: '6px', fontWeight: 600 }}>
-                City (12 Indian Metros)
-              </label>
-              <select
-                id="city-select"
-                value={selectedCity}
-                disabled={Boolean(geoLoc)}
-                onChange={(e) => {
-                  setSelectedCity(e.target.value);
+          {(!formCollapsed || !plan) && (
+            <div style={{ display: 'flex', gap: '4px', backgroundColor: 'rgba(27,27,27,0.06)', padding: '3px', borderRadius: 'var(--radius-pill)' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('live');
                   setGeoLoc(null);
                 }}
                 style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid rgba(27,27,27,0.2)',
-                  fontFamily: 'inherit',
-                  fontSize: '0.9rem',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.75rem',
+                  padding: '4px 14px',
+                  borderRadius: 'var(--radius-pill)',
+                  border: 'none',
+                  backgroundColor: mode === 'live' ? '#FFFFFF' : 'transparent',
+                  fontWeight: mode === 'live' ? 600 : 400,
+                  cursor: 'pointer',
                 }}
               >
-                {cities.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.state})
-                  </option>
-                ))}
-              </select>
-
-              <div style={{ marginTop: '6px' }}>
-                <button
-                  type="button"
-                  onClick={handleUseLocation}
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.7rem',
-                    color: 'var(--color-forest)',
-                    textDecoration: 'underline',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {geoLoc ? `✓ Using GPS (${geoLoc.lat.toFixed(2)}°N)` : '📍 Use my GPS location'}
-                </button>
-                {geoError && (
-                  <div style={{ color: 'var(--risk-extreme-text)', fontSize: '0.7rem', marginTop: '2px' }}>
-                    {geoError}
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div>
-              <label htmlFor="scenario-select" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginBottom: '6px', fontWeight: 600 }}>
-                Historical Replay Scenario
-              </label>
-              <select
-                id="scenario-select"
-                value={selectedScenario}
-                onChange={(e) => setSelectedScenario(e.target.value)}
+                Live Forecast
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('replay')}
                 style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid rgba(27,27,27,0.2)',
-                  fontFamily: 'inherit',
-                  fontSize: '0.85rem',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.75rem',
+                  padding: '4px 14px',
+                  borderRadius: 'var(--radius-pill)',
+                  border: 'none',
+                  backgroundColor: mode === 'replay' ? '#FFFFFF' : 'transparent',
+                  fontWeight: mode === 'replay' ? 600 : 400,
+                  cursor: 'pointer',
                 }}
               >
-                {scenarios.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.label} ({s.max_temp_c}°C / PM2.5 {s.max_pm2_5})
-                  </option>
-                ))}
-              </select>
+                Recorded Replay
+              </button>
             </div>
           )}
-
-          {/* Job Type */}
-          <div>
-            <label htmlFor="job-select" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginBottom: '6px', fontWeight: 600 }}>
-              Job Category
-            </label>
-            <select
-              id="job-select"
-              value={jobType}
-              onChange={(e) => handleJobChange(e.target.value as JobType)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid rgba(27,27,27,0.2)',
-                fontFamily: 'inherit',
-                fontSize: '0.9rem',
-              }}
-            >
-              <option value="CONSTRUCTION">Construction (Mason/Labor)</option>
-              <option value="RIDER">Delivery Rider (2-Wheeler)</option>
-              <option value="VENDOR">Street Vendor (Cart/Market)</option>
-              <option value="SANITATION">Sanitation / Waste Worker</option>
-            </select>
-          </div>
-
-          {/* Workload */}
-          <div>
-            <label htmlFor="workload-select" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginBottom: '6px', fontWeight: 600 }}>
-              Physical Workload
-            </label>
-            <select
-              id="workload-select"
-              value={workload}
-              onChange={(e) => setWorkload(e.target.value as Workload)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid rgba(27,27,27,0.2)',
-                fontFamily: 'inherit',
-                fontSize: '0.9rem',
-              }}
-            >
-              <option value="LIGHT">Light (Limit 30°C)</option>
-              <option value="MODERATE">Moderate (Limit 28°C)</option>
-              <option value="HEAVY">Heavy (Limit 26°C)</option>
-            </select>
-          </div>
-
-          {/* Sun Exposure */}
-          <div>
-            <label htmlFor="sun-select" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginBottom: '6px', fontWeight: 600 }}>
-              Direct Sun Exposure
-            </label>
-            <select
-              id="sun-select"
-              value={sunExposure}
-              onChange={(e) => setSunExposure(e.target.value as SunExposure)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid rgba(27,27,27,0.2)',
-                fontFamily: 'inherit',
-                fontSize: '0.9rem',
-              }}
-            >
-              <option value="FULL">Full Sunlight (+2.0°C adj)</option>
-              <option value="PARTIAL">Partial Shade</option>
-              <option value="SHADE">Full Indoor / Canopy Shade</option>
-            </select>
-          </div>
-
-          {/* Language Selector */}
-          <div>
-            <label htmlFor="lang-select" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginBottom: '6px', fontWeight: 600 }}>
-              Advisory Language
-            </label>
-            <select
-              id="lang-select"
-              value={language}
-              onChange={(e) => setLanguage(e.target.value as Language)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid rgba(27,27,27,0.2)',
-                fontFamily: 'inherit',
-                fontSize: '0.9rem',
-              }}
-            >
-              <option value="en">English (Grounded)</option>
-              <option value="hi">हिन्दी (Devanagari)</option>
-              <option value="ta">தமிழ் (Tamil)</option>
-            </select>
-          </div>
         </div>
 
-        {/* Shift Timing Sliders */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 'var(--space-4)', marginTop: 'var(--space-4)', paddingTop: '12px', borderTop: '1px solid rgba(27,27,27,0.08)' }}>
-          <div>
-            <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginBottom: '4px' }}>
-              Shift Window: <strong>{preferredStart}:00 – {preferredEnd}:00</strong>
-            </label>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <input
-                type="range"
-                min="0"
-                max="23"
-                value={preferredStart}
-                onChange={(e) => setPreferredStart(parseInt(e.target.value, 10))}
-                style={{ width: '50%' }}
-                aria-label="Shift start hour"
-              />
-              <input
-                type="range"
-                min="0"
-                max="23"
-                value={preferredEnd}
-                onChange={(e) => setPreferredEnd(parseInt(e.target.value, 10))}
-                style={{ width: '50%' }}
-                aria-label="Shift end hour"
-              />
+        {formCollapsed && plan ? (
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', marginTop: '8px', fontSize: '0.85rem', color: 'var(--color-ink-muted)' }}>
+            <span><strong>Target:</strong> {mode === 'live' ? (cities.find(c => c.id === selectedCity)?.name || selectedCity) : selectedScenario}</span>
+            <span>&bull;</span>
+            <span><strong>Job:</strong> {jobType}</span>
+            <span>&bull;</span>
+            <span><strong>Workload:</strong> {workload}</span>
+            <span>&bull;</span>
+            <span><strong>Shift:</strong> {preferredStart}:00–{preferredEnd}:00 ({maxHours}h max)</span>
+          </div>
+        ) : (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
+              {/* City / Scenario Picker */}
+              {mode === 'live' ? (
+                <div>
+                  <label htmlFor="city-select" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginBottom: '6px', fontWeight: 600 }}>
+                    City (12 Indian Metros)
+                  </label>
+                  <select
+                    id="city-select"
+                    value={selectedCity}
+                    disabled={Boolean(geoLoc)}
+                    onChange={(e) => {
+                      setSelectedCity(e.target.value);
+                      setGeoLoc(null);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid rgba(27,27,27,0.2)',
+                      fontFamily: 'inherit',
+                      fontSize: '0.9rem',
+                    }}
+                  >
+                    {cities.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.state})
+                      </option>
+                    ))}
+                  </select>
+
+                  <div style={{ marginTop: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={handleUseLocation}
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.7rem',
+                        color: 'var(--color-forest)',
+                        textDecoration: 'underline',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {geoLoc ? `✓ Using GPS (${geoLoc.lat.toFixed(2)}°N)` : '📍 Use my GPS location'}
+                    </button>
+                    {geoError && (
+                      <div style={{ color: 'var(--risk-extreme-text)', fontSize: '0.7rem', marginTop: '2px' }}>
+                        {geoError}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label htmlFor="scenario-select" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginBottom: '6px', fontWeight: 600 }}>
+                    Historical Replay Scenario
+                  </label>
+                  <select
+                    id="scenario-select"
+                    value={selectedScenario}
+                    onChange={(e) => setSelectedScenario(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid rgba(27,27,27,0.2)',
+                      fontFamily: 'inherit',
+                      fontSize: '0.85rem',
+                    }}
+                  >
+                    {scenarios.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.label} ({s.max_temp_c}°C / PM2.5 {s.max_pm2_5})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Job Type */}
+              <div>
+                <label htmlFor="job-select" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginBottom: '6px', fontWeight: 600 }}>
+                  Job Category
+                </label>
+                <select
+                  id="job-select"
+                  value={jobType}
+                  onChange={(e) => handleJobChange(e.target.value as JobType)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid rgba(27,27,27,0.2)',
+                    fontFamily: 'inherit',
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  <option value="CONSTRUCTION">Construction (Mason/Labor)</option>
+                  <option value="RIDER">Delivery Rider (2-Wheeler)</option>
+                  <option value="VENDOR">Street Vendor (Cart/Market)</option>
+                  <option value="SANITATION">Sanitation / Waste Worker</option>
+                </select>
+              </div>
+
+              {/* Workload */}
+              <div>
+                <label htmlFor="workload-select" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginBottom: '6px', fontWeight: 600 }}>
+                  Physical Workload
+                </label>
+                <select
+                  id="workload-select"
+                  value={workload}
+                  onChange={(e) => setWorkload(e.target.value as Workload)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid rgba(27,27,27,0.2)',
+                    fontFamily: 'inherit',
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  <option value="LIGHT">Light (Limit 30°C)</option>
+                  <option value="MODERATE">Moderate (Limit 28°C)</option>
+                  <option value="HEAVY">Heavy (Limit 26°C)</option>
+                </select>
+              </div>
+
+              {/* Sun Exposure */}
+              <div>
+                <label htmlFor="sun-select" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginBottom: '6px', fontWeight: 600 }}>
+                  Direct Sun Exposure
+                </label>
+                <select
+                  id="sun-select"
+                  value={sunExposure}
+                  onChange={(e) => setSunExposure(e.target.value as SunExposure)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid rgba(27,27,27,0.2)',
+                    fontFamily: 'inherit',
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  <option value="FULL">Full Sunlight (+2.0°C adj)</option>
+                  <option value="PARTIAL">Partial Shade</option>
+                  <option value="SHADE">Full Indoor / Canopy Shade</option>
+                </select>
+              </div>
+
+              {/* Language Selector */}
+              <div>
+                <label htmlFor="lang-select" style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginBottom: '6px', fontWeight: 600 }}>
+                  Advisory Language
+                </label>
+                <select
+                  id="lang-select"
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value as Language)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid rgba(27,27,27,0.2)',
+                    fontFamily: 'inherit',
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  <option value="en">English (Grounded)</option>
+                  <option value="hi">हिन्दी (Devanagari)</option>
+                  <option value="ta">தமிழ் (Tamil)</option>
+                </select>
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginBottom: '4px' }}>
-              Max Working Hours: <strong>{maxHours} hours</strong>
-            </label>
-            <input
-              type="range"
-              min="2"
-              max="14"
-              value={maxHours}
-              onChange={(e) => setMaxHours(parseInt(e.target.value, 10))}
-              style={{ width: '100%' }}
-              aria-label="Maximum shift working hours"
-            />
-          </div>
+            {/* Shift Timing Sliders */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 'var(--space-4)', marginTop: 'var(--space-4)', paddingTop: '12px', borderTop: '1px solid rgba(27,27,27,0.08)' }}>
+              <div>
+                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginBottom: '4px' }}>
+                  Shift Window: <strong>{preferredStart}:00 – {preferredEnd}:00</strong>
+                </label>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <input
+                    type="range"
+                    min="0"
+                    max="23"
+                    value={preferredStart}
+                    onChange={(e) => setPreferredStart(parseInt(e.target.value, 10))}
+                    style={{ width: '50%' }}
+                    aria-label="Shift start hour"
+                  />
+                  <input
+                    type="range"
+                    min="0"
+                    max="23"
+                    value={preferredEnd}
+                    onChange={(e) => setPreferredEnd(parseInt(e.target.value, 10))}
+                    style={{ width: '50%' }}
+                    aria-label="Shift end hour"
+                  />
+                </div>
+              </div>
 
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
-            <Button variant="primary" onClick={fetchPlan} disabled={loading}>
-              {loading ? 'Evaluating Model...' : 'Update Plan &rarr;'}
-            </Button>
-          </div>
-        </div>
+              <div>
+                <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', marginBottom: '4px' }}>
+                  Max Working Hours: <strong>{maxHours} hours</strong>
+                </label>
+                <input
+                  type="range"
+                  min="2"
+                  max="14"
+                  value={maxHours}
+                  onChange={(e) => setMaxHours(parseInt(e.target.value, 10))}
+                  style={{ width: '100%' }}
+                  aria-label="Maximum shift working hours"
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
+                <Button variant="primary" onClick={fetchPlan} disabled={loading}>
+                  {loading ? 'Evaluating Model...' : 'Update Plan &rarr;'}
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
       </Card>
 
       {/* PLAN OUTPUT SECTION */}
@@ -568,7 +607,7 @@ export const PlansPage: React.FC = () => {
 
       {!loading && !error && plan && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
-          {/* Plan Result Header */}
+          {/* 1. Plan Result Header */}
           <div
             style={{
               backgroundColor: '#FFFFFF',
@@ -605,85 +644,7 @@ export const PlansPage: React.FC = () => {
             </div>
           </div>
 
-          {/* 24-Hour Ribbon */}
-          <Card variant="white">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-forest)' }}>
-                24-HOUR EXPOSURE RIBBON
-              </span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-ink-muted)' }}>
-                Hourly WBGT heat stress &amp; AQI tier
-              </span>
-            </div>
-            <HourRibbon hours={plan.hours} />
-          </Card>
-
-          {/* Inline SVG Chart */}
-          <Card variant="white">
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-forest)', marginBottom: '12px' }}>
-              WBGT HEAT STRESS CURVE VS SAFE WORKLOAD THRESHOLD
-            </div>
-            <HourlyChart
-              hours={plan.hours}
-              workload={workload}
-              shiftStart={preferredStart}
-              shiftEnd={preferredEnd}
-            />
-          </Card>
-
-          {/* Windows & Best Blocks Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--space-6)' }}>
-            <Card variant="beige">
-              <WindowList
-                title="DANGEROUS SHIFT WINDOWS (AVOID / REST)"
-                windows={plan.dangerous_windows}
-                emptyMessage="✓ No extreme heat or smog windows detected in this shift."
-              />
-            </Card>
-
-            <Card variant="beige">
-              <WindowList
-                title="RECOMMENDED SAFE WORK BLOCKS"
-                windows={plan.recommended_blocks}
-                emptyMessage="⚠ Continuous high risk: no completely safe block found. Staggered rest required."
-              />
-            </Card>
-          </div>
-
-          {/* Hydration & Mask Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--space-6)' }}>
-            {/* Hydration Card */}
-            <Card variant="beige">
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-forest)', marginBottom: '8px' }}>
-                💧 HYDRATION GUIDANCE (HEAT STRESS DERIVED)
-              </div>
-              <p style={{ fontSize: '0.95rem', color: 'var(--color-ink)' }}>
-                {plan.hydration.guideline ||
-                  (plan.hydration.needed
-                    ? 'Drink at least 250ml water every 15-20 minutes with ORS salts during high WBGT hours.'
-                    : 'Maintain regular baseline hydration (250ml per hour).')}
-              </p>
-              {plan.hydration.frequent_windows && plan.hydration.frequent_windows.length > 0 && (
-                <div style={{ marginTop: '8px', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--risk-high-text)' }}>
-                  Frequent intake required: {plan.hydration.frequent_windows.map((w) => `${w.start}–${w.end}`).join(', ')}
-                </div>
-              )}
-            </Card>
-
-            {/* Mask Card */}
-            <Card variant="beige">
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-forest)', marginBottom: '8px' }}>
-                😷 PARTICULATE &amp; SMOG PROTECTION
-              </div>
-              <p style={{ fontSize: '0.95rem', color: 'var(--color-ink)' }}>
-                {plan.mask.needed
-                  ? `N95 particulate respirator advised during peak hours. ${plan.mask.note || 'High ambient PM2.5 detected.'}`
-                  : 'Air quality levels within standard limits. Particulate mask optional.'}
-              </p>
-            </Card>
-          </div>
-
-          {/* Plain-Language Worker Advisory Card */}
+          {/* 2. Plain-Language Worker Advisory Card (Worker First) */}
           <Card variant="white" style={{ border: '2px solid var(--color-forest)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -755,10 +716,12 @@ export const PlansPage: React.FC = () => {
             >
               <span style={{ fontSize: '1.1rem' }}>🚨</span>
               <div style={{ fontSize: '0.85rem', color: 'var(--risk-extreme-text)' }}>
-                <strong>When to seek immediate medical help:</strong>{' '}
-                {advisory?.seek_help && advisory.seek_help.length > 0
-                  ? advisory.seek_help.join(' ')
-                  : 'Dizziness, confusion, cessation of sweating or vomiting requires immediate shaded rest and calling 108.'}
+                <strong>Emergency guidance:</strong> In an emergency call 112 (India's emergency number). In many states 108 also reaches an ambulance.
+                {advisory?.seek_help && advisory.seek_help.length > 0 && (
+                  <div style={{ marginTop: '4px' }}>
+                    {advisory.seek_help.join(' ')}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -770,7 +733,85 @@ export const PlansPage: React.FC = () => {
             )}
           </Card>
 
-          {/* Action Buttons: WhatsApp / Share / Print */}
+          {/* 3. Windows & Best Blocks Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--space-6)' }}>
+            <Card variant="beige">
+              <WindowList
+                title="DANGEROUS SHIFT WINDOWS (AVOID / REST)"
+                windows={plan.dangerous_windows}
+                emptyMessage="✓ No extreme heat or smog windows detected in this shift."
+              />
+            </Card>
+
+            <Card variant="beige">
+              <WindowList
+                title="RECOMMENDED SAFE WORK BLOCKS"
+                windows={plan.recommended_blocks}
+                emptyMessage="⚠ Continuous high risk: no completely safe block found. Staggered rest required."
+              />
+            </Card>
+          </div>
+
+          {/* 4. Hydration & Mask Row */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--space-6)' }}>
+            {/* Hydration Card */}
+            <Card variant="beige">
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-forest)', marginBottom: '8px' }}>
+                💧 HYDRATION GUIDANCE (HEAT STRESS DERIVED)
+              </div>
+              <p style={{ fontSize: '0.95rem', color: 'var(--color-ink)' }}>
+                {plan.hydration.guideline ||
+                  (plan.hydration.needed
+                    ? 'Drink at least 250ml water every 15-20 minutes with ORS salts during high WBGT hours.'
+                    : 'Maintain regular baseline hydration (250ml per hour).')}
+              </p>
+              {plan.hydration.frequent_windows && plan.hydration.frequent_windows.length > 0 && (
+                <div style={{ marginTop: '8px', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--risk-high-text)' }}>
+                  Frequent intake required: {plan.hydration.frequent_windows.map((w) => `${w.start}–${w.end}`).join(', ')}
+                </div>
+              )}
+            </Card>
+
+            {/* Mask Card */}
+            <Card variant="beige">
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-forest)', marginBottom: '8px' }}>
+                😷 PARTICULATE &amp; SMOG PROTECTION
+              </div>
+              <p style={{ fontSize: '0.95rem', color: 'var(--color-ink)' }}>
+                {plan.mask.needed
+                  ? `N95 particulate respirator advised during peak hours. ${plan.mask.note || 'High ambient PM2.5 detected.'}`
+                  : 'Air quality levels within standard limits. Particulate mask optional.'}
+              </p>
+            </Card>
+          </div>
+
+          {/* 5. 24-Hour Ribbon */}
+          <Card variant="white">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-forest)' }}>
+                24-HOUR EXPOSURE RIBBON
+              </span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-ink-muted)' }}>
+                Hourly WBGT heat stress &amp; AQI tier
+              </span>
+            </div>
+            <HourRibbon hours={plan.hours} />
+          </Card>
+
+          {/* 6. Inline SVG Chart */}
+          <Card variant="white">
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-forest)', marginBottom: '12px' }}>
+              WBGT HEAT STRESS CURVE VS SAFE WORKLOAD THRESHOLD
+            </div>
+            <HourlyChart
+              hours={plan.hours}
+              workload={workload}
+              shiftStart={preferredStart}
+              shiftEnd={preferredEnd}
+            />
+          </Card>
+
+          {/* 7. Action Buttons: WhatsApp / Share / Print */}
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
             <Button variant="primary" onClick={handleCopyWhatsApp}>
               📋 Copy as WhatsApp Text

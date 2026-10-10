@@ -33,8 +33,9 @@ describe('Safety Page', () => {
     expect(screen.getByText(/What the Model May Do/i)).toBeInTheDocument();
     expect(screen.getByText(/What the Model May NOT Do/i)).toBeInTheDocument();
 
-    // Check emergency protocol
-    expect(screen.getByText(/Heat Stroke Emergency Protocol/i)).toBeInTheDocument();
+    // Check emergency guidance
+    expect(screen.getByText(/Emergency Guidance/i)).toBeInTheDocument();
+    expect(screen.getByText(/In an emergency call 112/i)).toBeInTheDocument();
   });
 
   it('renders assumptions table and filters by category', async () => {

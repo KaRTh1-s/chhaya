@@ -346,7 +346,7 @@ export const Analytics: React.FC = () => {
             <h2 style={{ fontSize: '1.1rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-muted)', marginBottom: '1rem' }}>
               3. Benchmark Replay Scenarios
             </h2>
-            <div style={{ overflowX: 'auto' }}>
+            <div style={{ overflowX: 'auto' }} tabIndex={0} role="region" aria-label="Benchmark replay scenarios table">
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border)', textAlign: 'left' }}>

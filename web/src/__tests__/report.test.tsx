@@ -66,17 +66,17 @@ describe('Report Page', () => {
     expect(screen.getByText('OVERALL SHIFT EXPOSURE LEVEL')).toBeInTheDocument();
     expect(screen.getByText(/1\. Top Flagged Risk Windows/i)).toBeInTheDocument();
     expect(screen.getByText(/2\. Recommended Safe Work Blocks/i)).toBeInTheDocument();
-    expect(screen.getByText(/3\. Mandatory Operational Directives/i)).toBeInTheDocument();
-    expect(screen.getByText(/Hydration Protocol/i)).toBeInTheDocument();
+    expect(screen.getByText(/3\. Operational Directives & Guidance/i)).toBeInTheDocument();
+    expect(screen.getByText(/Hydration Guidance/i)).toBeInTheDocument();
     expect(screen.getByText(/Respiratory Protection/i)).toBeInTheDocument();
   });
 
   it('supports copying report as formatted text', async () => {
     const writeTextSpy = vi.fn().mockResolvedValue(undefined);
-    Object.assign(navigator, {
-      clipboard: {
-        writeText: writeTextSpy,
-      },
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: writeTextSpy },
+      configurable: true,
+      writable: true,
     });
 
     render(

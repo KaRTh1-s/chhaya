@@ -48,7 +48,7 @@ export const Home: React.FC = () => {
   const evidenceMap = new Map(plan.evidence.map((e) => [e.id, e]));
 
   return (
-    <main className="home-page" id="main-content">
+    <div className="home-page" id="main-content">
       {/* 1. HERO SECTION */}
       <section className="container" style={{ textAlign: 'center', paddingTop: 'var(--space-8)', paddingBottom: 'var(--space-12)' }}>
         <Kicker>Chhaya Heat and Air Copilot</Kicker>
@@ -455,6 +455,6 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 };

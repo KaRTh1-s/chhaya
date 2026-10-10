@@ -52,7 +52,13 @@ export const HourlyChart: React.FC<HourlyChartProps> = ({
   const shiftWidth = Math.max(0, shiftEndX - shiftStartX);
 
   return (
-    <div className={`hourly-chart-container ${className}`.trim()} style={{ width: '100%', overflowX: 'auto' }}>
+    <div
+      className={`hourly-chart-container ${className}`.trim()}
+      style={{ width: '100%', overflowX: 'auto' }}
+      tabIndex={0}
+      role="region"
+      aria-label="WBGT heat stress hourly chart"
+    >
       <svg
         viewBox={`0 0 ${width} ${height}`}
         style={{ width: '100%', minWidth: '560px', height: 'auto', display: 'block' }}

@@ -21,6 +21,14 @@ function formatRelativeTime(isoStr: string): string {
   }
 }
 
+export const KNOWN_EVENT_TYPES = [
+  'PLAN_GENERATED',
+  'ADVISORY_GENERATED',
+  'CREW_CREATED',
+  'CREW_DELETED',
+  'CACHE_REFRESH',
+] as const;
+
 export const Audit: React.FC = () => {
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,8 +65,11 @@ export const Audit: React.FC = () => {
     });
   };
 
-  // Derive unique event types for filtering
-  const eventTypes = ['ALL', ...Array.from(new Set(events.map((e) => e.event_type)))];
+  // Derive unique event types dynamically from response and known backend types
+  const eventTypes = [
+    'ALL',
+    ...Array.from(new Set([...events.map((e) => e.event_type), ...KNOWN_EVENT_TYPES])).filter(Boolean),
+  ];
 
   const filteredEvents = events.filter((e) => {
     if (typeFilter === 'ALL') return true;
@@ -73,7 +84,7 @@ export const Audit: React.FC = () => {
           System Audit Log
         </h1>
         <p className="page-subtitle" style={{ color: 'var(--text-secondary)', maxWidth: '720px', lineHeight: 1.5 }}>
-          Immutable operational event trail of shift computations, model verification passes, and crew roster modifications.
+          Append-only (kept 30 days) operational event trail of shift computations, model verification passes, and crew roster modifications.
         </p>
       </div>
 
@@ -169,7 +180,7 @@ export const Audit: React.FC = () => {
       )}
 
       {!loading && !error && filteredEvents.length > 0 && (
-        <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
+        <div className="card" style={{ padding: '0', overflowX: 'auto' }} tabIndex={0} role="region" aria-label="System audit log table">
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
             <thead>
               <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--border)' }}>

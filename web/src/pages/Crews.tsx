@@ -215,7 +215,7 @@ export const CrewsPage: React.FC = () => {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                     <div>
-                      <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', margin: 0 }}>{crew.name}</h3>
+                      <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.4rem', margin: 0 }}>{crew.name}</h2>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-ink-muted)', marginTop: '2px' }}>
                         City: {crew.city_id.toUpperCase()} &middot; Size: {crew.size} workers
                       </div>

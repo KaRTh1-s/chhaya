@@ -185,7 +185,7 @@ export const Report: React.FC = () => {
                 <span className="risk-explanation">
                   {plan.overall_risk === 'EXTREME' && 'Critical thermal hazard. Mandatory halt to outdoor manual exertion during peak hours.'}
                   {plan.overall_risk === 'HIGH' && 'High thermal stress. Reduce workload and enforce shaded breaks.'}
-                  {plan.overall_risk === 'MODERATE' && 'Moderate stress. Work-rest cycles and active hydration protocol active.'}
+                  {plan.overall_risk === 'MODERATE' && 'Moderate stress. Work-rest cycles and active hydration guidance active.'}
                   {plan.overall_risk === 'LOW' && 'Normal operational envelope with standard baseline hydration.'}
                 </span>
               </div>
@@ -210,7 +210,7 @@ export const Report: React.FC = () => {
           <div className="brief-grid">
             {/* Left Column: Shift Timing & Risk Windows */}
             <div className="brief-col">
-              <h3 className="section-heading">1. Top Flagged Risk Windows</h3>
+              <h2 className="section-heading" style={{ fontSize: '1.05rem', fontWeight: 700, margin: '0 0 0.75rem' }}>1. Top Flagged Risk Windows</h2>
               {plan.dangerous_windows && plan.dangerous_windows.length > 0 ? (
                 <div className="window-cards-list">
                   {plan.dangerous_windows.slice(0, 3).map((w, idx) => (
@@ -233,7 +233,7 @@ export const Report: React.FC = () => {
                 <p className="clean-note">✓ No dangerous exposure windows flagged across this shift envelope.</p>
               )}
 
-              <h3 className="section-heading" style={{ marginTop: '1.25rem' }}>2. Recommended Safe Work Blocks</h3>
+              <h2 className="section-heading" style={{ fontSize: '1.05rem', fontWeight: 700, margin: '1.25rem 0 0.75rem' }}>2. Recommended Safe Work Blocks</h2>
               {plan.recommended_blocks && plan.recommended_blocks.length > 0 ? (
                 <div className="safe-blocks-list">
                   {plan.recommended_blocks.map((b, idx) => (
@@ -253,14 +253,14 @@ export const Report: React.FC = () => {
               )}
             </div>
 
-            {/* Right Column: Protocols & Gear */}
+            {/* Right Column: Guidance & Gear */}
             <div className="brief-col">
-              <h3 className="section-heading">3. Mandatory Operational Directives</h3>
+              <h2 className="section-heading" style={{ fontSize: '1.05rem', fontWeight: 700, margin: '0 0 0.75rem' }}>3. Operational Directives & Guidance</h2>
               
               <div className="protocol-box">
                 <div className="proto-icon">💧</div>
                 <div className="proto-text">
-                  <strong>Hydration Protocol</strong>
+                  <strong>Hydration Guidance</strong>
                   <p>Enforce 500–750 ml cool electrolyte fluid per hour of active labor. Ensure shade tents provide chilled water points.</p>
                 </div>
               </div>
@@ -293,8 +293,11 @@ export const Report: React.FC = () => {
               <div className="protocol-box emergency">
                 <div className="proto-icon">🚨</div>
                 <div className="proto-text">
-                  <strong>Heat Stroke Emergency (108)</strong>
-                  <p>Symptoms: Confusion, hot red dry skin, fainting. Move immediately to shade, douse with cool water, fan vigorously, and call 108.</p>
+                  <strong>Emergency Guidance</strong>
+                  <p>
+                    In an emergency call 112 (India's emergency number). In many states 108 also reaches an ambulance.{' '}
+                    {plan.seek_help_lines && plan.seek_help_lines.length > 0 ? plan.seek_help_lines.join(' ') : 'Move immediately to shade, douse with water, and seek emergency medical help.'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -303,8 +306,8 @@ export const Report: React.FC = () => {
           {/* National City Risk Comparison Table */}
           {boardData.length > 0 && (
             <div className="brief-ranking-section">
-              <h3 className="section-heading">4. National Risk Context (12-City Overview)</h3>
-              <div className="ranking-table-wrapper">
+              <h2 className="section-heading" style={{ fontSize: '1.05rem', fontWeight: 700, margin: '0 0 0.75rem' }}>4. National Risk Context (12-City Overview)</h2>
+              <div className="ranking-table-wrapper" tabIndex={0} role="region" aria-label="National city risk comparison table">
                 <table className="ranking-table">
                   <thead>
                     <tr>
