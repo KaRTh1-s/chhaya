@@ -18,7 +18,7 @@ const DesignPage = lazy(() => import('./pages/Design').then((m) => ({ default: m
 // Placeholders for remaining pages (will be swapped as each page is built)
 const ReportPage = lazy(() => import('./pages/Report').then((m) => ({ default: m.Report })));
 const AnalyticsPage = lazy(() => import('./pages/Analytics').then((m) => ({ default: m.Analytics })));
-const AuditPage = lazy(() => import('./pages/Placeholders').then((m) => ({ default: m.AuditPage })));
+const AuditPage = lazy(() => import('./pages/Audit').then((m) => ({ default: m.Audit })));
 const SafetyPage = lazy(() => import('./pages/Placeholders').then((m) => ({ default: m.SafetyPage })));
 
 const AppContent: React.FC = () => {
