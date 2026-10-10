@@ -336,7 +336,7 @@ def generate_all_mock_data():
     with open(out_dir / "board.json", "w", encoding="utf-8") as f:
         json.dump(board_data, f, indent=2)
 
-    # 7. Audit Log
+    # 7. Audit Log (matches real backend event_types)
     audit_data = {
         "audit_events": [
             {
@@ -354,7 +354,7 @@ def generate_all_mock_data():
             },
             {
                 "id": "aud_01jk982abc2",
-                "event_type": "ADVISORY_PROMPTED",
+                "event_type": "ADVISORY_GENERATED",
                 "timestamp": "2026-10-10T08:45:13+05:30",
                 "details": {
                     "model": "anthropic.claude-3-5-sonnet",
@@ -365,18 +365,8 @@ def generate_all_mock_data():
             },
             {
                 "id": "aud_01jk982abc3",
-                "event_type": "ALERT_DISPATCHED",
+                "event_type": "CREW_CREATED",
                 "timestamp": "2026-10-10T08:30:00+05:30",
-                "details": {
-                    "city_id": "delhi",
-                    "target_crew_count": 6,
-                    "trigger_reason": "DANGEROUS_HEAT_WINDOW_APPROACHING",
-                },
-            },
-            {
-                "id": "aud_01jk982abc4",
-                "event_type": "CREW_REGISTERED",
-                "timestamp": "2026-10-10T07:12:44+05:30",
                 "details": {
                     "crew_id": "crw_south_delhi_masonry",
                     "city_id": "delhi",
@@ -384,7 +374,16 @@ def generate_all_mock_data():
                     "size": 14,
                 },
             },
-        ]
+            {
+                "id": "aud_01jk982abc4",
+                "event_type": "CACHE_REFRESH",
+                "timestamp": "2026-10-10T07:12:44+05:30",
+                "details": {
+                    "location": "28.61_77.21",
+                    "count": 24,
+                },
+            },
+        ],
     }
     with open(out_dir / "audit.json", "w", encoding="utf-8") as f:
         json.dump(audit_data, f, indent=2)

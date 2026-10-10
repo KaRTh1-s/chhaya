@@ -60,5 +60,19 @@ describe('OpenAPI Spec Contract Verification', () => {
     expect(scenario.properties.city_id).toBeDefined();
     expect(scenario.properties.max_temp_c).toBeDefined();
     expect(scenario.properties.max_pm2_5).toBeDefined();
+
+    // AuditEvent schema
+    const auditEvent = schemas.AuditEvent;
+    expect(auditEvent.properties.id).toBeDefined();
+    expect(auditEvent.properties.event_type).toBeDefined();
+    expect(auditEvent.properties.timestamp).toBeDefined();
+    expect(auditEvent.properties.details).toBeDefined();
+  });
+
+  it('documents whether openapi.yaml defines an enum for AuditEvent.event_type', () => {
+    const schemas = spec.components?.schemas;
+    const auditEventType = schemas?.AuditEvent?.properties?.event_type;
+    // OpenAPI currently defines event_type as generic string; UI derives options dynamically
+    expect(auditEventType.type).toBe('string');
   });
 });

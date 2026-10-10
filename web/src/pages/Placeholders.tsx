@@ -62,7 +62,7 @@ export const RiskBoardPage: React.FC = () => (
   <PagePlaceholder
     kicker="REGIONAL EXPOSURE MATRIX"
     title="City heat stress and *air quality matrix.*"
-    description="Real-time multi-city thermal risk ranking and 12-hour peak projections for outdoor labor crews."
+    description="Hourly modelled multi-city thermal risk ranking and 12-hour peak projections for outdoor labor crews."
   />
 );
 
@@ -94,7 +94,7 @@ export const AuditPage: React.FC = () => (
   <PagePlaceholder
     kicker="SECURITY & TRANSPARENCY"
     title="Append-only *audit ledger.*"
-    description="Immutable trace of all generated plans, agent reasoning steps, and SMS broadcast dispatches."
+    description="Append-only (kept 30 days) trace of all generated plans, agent reasoning steps, and SMS broadcast dispatches."
   />
 );
 

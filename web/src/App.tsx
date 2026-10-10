@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useState } from 'react';
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { CursorGlow } from './components/CursorGlow';
-import { LoadingSkeleton, OfflineBanner } from './components/Feedback';
+import { LoadingSkeleton, OfflineBanner, DemoFallbackBanner } from './components/Feedback';
 import { Footer } from './components/Footer';
 import { HelpButton } from './components/HelpButton';
 import { NavPill } from './components/NavPill';
@@ -32,6 +32,7 @@ const AppContent: React.FC = () => {
   return (
     <div className="app-layout">
       <OfflineBanner />
+      <DemoFallbackBanner />
       <TopBanner />
       <NavPill />
       <CursorGlow />

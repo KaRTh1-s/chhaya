@@ -1,16 +1,9 @@
 import React from 'react';
-import { APP_VERSION, isLiveDeployment, STACK_SERVICES } from '../config/stack';
+import { APP_VERSION, getBannerText, STACK_SERVICES } from '../config/stack';
 import { LINKS } from '../config/links';
 
-export const TopBanner: React.FC = () => {
-  const bedrockService = STACK_SERVICES.find((s) => s.name === 'Amazon Bedrock');
-  const bedrockLive = bedrockService?.live ?? false;
-
-  const stackText = bedrockLive
-    ? 'Built on AWS Strands Agents + Amazon Bedrock.'
-    : 'Open source heat & air copilot. Runs on your laptop (AWS deployment in progress).';
-
-  const deploymentText = isLiveDeployment ? 'Live on AWS.' : 'Local / Demo Mode.';
+export const TopBanner: React.FC<{ services?: typeof STACK_SERVICES }> = ({ services = STACK_SERVICES }) => {
+  const { stackText, deploymentText } = getBannerText(services);
 
   return (
     <aside className="top-banner" aria-label="Announcement banner">

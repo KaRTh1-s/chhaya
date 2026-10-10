@@ -141,3 +141,37 @@ export const OfflineBanner: React.FC = () => {
     </div>
   );
 };
+
+export const DemoFallbackBanner: React.FC = () => {
+  const [isMock, setIsMock] = useState(false);
+
+  useEffect(() => {
+    import('../api/client').then(({ subscribeToMockStatus }) => {
+      const unsub = subscribeToMockStatus((mockActive) => {
+        setIsMock(mockActive);
+      });
+      return unsub;
+    });
+  }, []);
+
+  if (!isMock) return null;
+
+  return (
+    <div
+      role="status"
+      data-testid="demo-fallback-banner"
+      style={{
+        backgroundColor: 'rgba(245, 158, 11, 0.15)',
+        color: '#b45309',
+        fontFamily: 'var(--font-mono)',
+        fontSize: '0.8rem',
+        textAlign: 'center',
+        padding: '6px 12px',
+        fontWeight: 600,
+        borderBottom: '1px solid rgba(245, 158, 11, 0.3)',
+      }}
+    >
+      Showing recorded demo data because the live service is unreachable.
+    </div>
+  );
+};
