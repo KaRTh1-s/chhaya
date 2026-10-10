@@ -94,12 +94,14 @@ class HourPlan:
     risk_level: RiskLevel
     reasons: list[str]
     evidence_ids: list[str]
+    hydration: str = "NORMAL"
 
     def to_dict(self):
         d = asdict(self)
         d["hour"] = self.hour.isoformat()
         d["status"] = self.status.value
         d["risk_level"] = self.risk_level.value
+        d["hydration"] = self.hydration
         return d
 
 @dataclass(frozen=True)
