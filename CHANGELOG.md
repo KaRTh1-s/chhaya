@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4] - 2026-10-10
+### Fixed
+- **Chennai AQI Bug**: Fixed CPCB sub-index calculation in `aqi.py` to handle intermediate float concentrations between discrete breakpoint boundaries without erroneous spikes to AQI 500.
+- **Air vs. Heat Risk Attribution**: Fixed advisory sentence generation to separate air pollution warnings (`AIR_SEVERE_AVOID`) from heat stress warnings (`HEAT_WBGT_OVER_LIMIT`), ensuring air avoidance windows cite AQI cards and do not claim heat as the cause.
+- **No Safe Window Guidance**: Prevented misleading recommendations of "cooler early morning hours" when morning hours are hazardous (e.g. morning winter smog); plain language advice now directs workers to suspend non-essential exposure.
+- **Replay Scenario Wording**: Standardized replay advisory text to "On this recorded day" across English, Hindi, and Tamil.
+- **Technical Acronym Elimination**: Replaced technical acronyms (such as "WBGT") with natural plain-language descriptions in worker-facing advisory sentences.
+- **Secrets & Audit Hygiene**: Added strict sanitization of auth passcodes, API keys, and session tokens from audit events and responses.
+- **Packaged Fixtures on AWS Lambda**: Bundled canonical scenario fixtures into `chhaya_engine` package and build scripts to ensure `POST /plan` and `POST /advise` replay scenarios work seamlessly on AWS Lambda.
+
+### Added
+- Bedrock candidate model benchmark script `scripts/bench_models.py`.
+- Local standalone server verification script `scripts/verify_local_server.py`.
+- Automated smoke test with live deployed API in `ap-south-1` (`https://09mp10pdca.execute-api.ap-south-1.amazonaws.com`).
+
 ## [0.3.3] - 2026-10-10
 ### Added
 - State verification and fixtures audit automation `scripts/verify_state.ps1` and `scripts/verify_fixtures.py`.
