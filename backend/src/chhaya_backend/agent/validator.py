@@ -8,9 +8,9 @@ Enforces:
 6. Medical claims blocklist.
 7. Prohibition of raw system codes (e.g. SEEK_HELP_*) and uppercase enum words (e.g. REDUCED, AVOID).
 """
-from dataclasses import dataclass
 import json
 import re
+from dataclasses import dataclass
 from typing import Any
 
 from chhaya_backend.agent.facts import Facts
@@ -112,8 +112,7 @@ def validate_advisory_json(
                 cleaned = cleaned[7:]
             elif cleaned.startswith("```"):
                 cleaned = cleaned[3:]
-            if cleaned.endswith("```"):
-                cleaned = cleaned[:-3]
+            cleaned = cleaned.removesuffix("```")
             data = json.loads(cleaned.strip())
         except (json.JSONDecodeError, TypeError, ValueError) as e:
             return ValidationResult(False, [], f"Malformed JSON: {e}")

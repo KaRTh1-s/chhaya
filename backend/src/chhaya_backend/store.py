@@ -242,8 +242,16 @@ class DynamoDBStore:
         ts_str = now.isoformat()
         ttl_ts = int(time.time()) + (30 * 86400) # 30 days retention
 
-        # Ensure no PII in details
-        sanitized_details = {k: v for k, v in details.items() if k not in ("name", "phone", "email", "worker_name")}
+        # Ensure no PII or secrets in details
+        redacted_keys = (
+            "name", "phone", "email", "worker_name", "passcode", "secret",
+            "password", "token", "authorization", "x-chhaya-passcode", "api_key",
+            "aws_secret_access_key", "aws_session_token", "access_key",
+        )
+        sanitized_details = {
+            k: v for k, v in details.items()
+            if k.lower() not in redacted_keys
+        }
 
         item = {
             "pk": f"AUDIT#{date_str}",
