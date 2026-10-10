@@ -13,11 +13,9 @@ export const Footer: React.FC = () => {
           <div>
             <div className="footer-col-title">Product</div>
             <ul className="footer-col-list">
-              <li><NavLink to="/board">Risk Board</NavLink></li>
               <li><NavLink to="/plans">Daily Exposure Plans</NavLink></li>
               <li><NavLink to="/analytics">Regional Analytics</NavLink></li>
               <li><NavLink to="/crews">Crew Dashboard</NavLink></li>
-              <li><NavLink to="/report">Shift Summary Report</NavLink></li>
             </ul>
           </div>
 
@@ -59,7 +57,7 @@ export const Footer: React.FC = () => {
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
             <span>Press <kbd style={{ padding: '1px 5px', border: '1px solid #999', borderRadius: '3px' }}>?</kbd> for shortcuts</span>
             <span>&middot;</span>
-            <span><kbd style={{ padding: '1px 5px', border: '1px solid #999', borderRadius: '3px' }}>g</kbd> <kbd style={{ padding: '1px 5px', border: '1px solid #999', borderRadius: '3px' }}>b</kbd> for Risk Board</span>
+            <span><kbd style={{ padding: '1px 5px', border: '1px solid #999', borderRadius: '3px' }}>g</kbd> <kbd style={{ padding: '1px 5px', border: '1px solid #999', borderRadius: '3px' }}>p</kbd> for Plans</span>
           </div>
         </div>
       </div>

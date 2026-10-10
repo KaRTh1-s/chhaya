@@ -151,9 +151,13 @@ export function formatReportText(
 
   if (boardData && boardData.length > 0) {
     lines.push(`\n4. CITY RISK COMPARISON (TOP 5 HIGHEST RISK):`);
-    const sorted = [...boardData].sort((a, b) => (b.peak_12h_wbgt_c || 0) - (a.peak_12h_wbgt_c || 0)).slice(0, 5);
+    const sorted = [...boardData].sort((a, b) => (b.peak_12h_wbgt_c || b.current_wbgt_c || 0) - (a.peak_12h_wbgt_c || a.current_wbgt_c || 0)).slice(0, 5);
     sorted.forEach((c, idx) => {
-      lines.push(`   ${idx + 1}. ${(c.city_name || c.city_id).padEnd(16)} Peak WBGT: ${(c.peak_12h_wbgt_c ?? c.current_wbgt_c ?? 0).toFixed(1)}°C | AQI: ${(c.current_aqi ?? 0).toFixed(0)} | Risk: ${c.current_risk}`);
+      const risk = c.current_risk || (c.jobs && typeof c.jobs === 'object' && !Array.isArray(c.jobs) ? (Object.values(c.jobs)[0] as any)?.current_risk : (Array.isArray(c.jobs) && c.jobs[0]?.current_risk)) || 'LOW';
+      const peakWbgt = c.peak_12h_wbgt_c ?? c.current_wbgt_c;
+      const wbgtStr = peakWbgt != null ? `${peakWbgt.toFixed(1)}°C` : 'N/A';
+      const aqiStr = c.current_aqi != null ? `${c.current_aqi.toFixed(0)}` : 'N/A';
+      lines.push(`   ${idx + 1}. ${(c.city_name || c.city_id).padEnd(16)} Peak WBGT: ${wbgtStr} | AQI: ${aqiStr} | Risk: ${risk}`);
     });
   }
 

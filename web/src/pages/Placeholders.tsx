@@ -58,14 +58,6 @@ const PagePlaceholder: React.FC<PlaceholderProps> = ({
   );
 };
 
-export const RiskBoardPage: React.FC = () => (
-  <PagePlaceholder
-    kicker="REGIONAL EXPOSURE MATRIX"
-    title="City heat stress and *air quality matrix.*"
-    description="Hourly modelled multi-city thermal risk ranking and 12-hour peak projections for outdoor labor crews."
-  />
-);
-
 export const AnalyticsPage: React.FC = () => (
   <PagePlaceholder
     kicker="LONGITUDINAL TELEMETRY"
@@ -95,14 +87,6 @@ export const AuditPage: React.FC = () => (
     kicker="SECURITY & TRANSPARENCY"
     title="Append-only *audit ledger.*"
     description="Append-only (kept 30 days) trace of all generated plans, agent reasoning steps, and SMS broadcast dispatches."
-  />
-);
-
-export const ReportPage: React.FC = () => (
-  <PagePlaceholder
-    kicker="COMPLIANCE & EXPORT"
-    title="Shift safety and *exposure reports.*"
-    description="Printable summaries and verifiable CSV exports for occupational health compliance."
   />
 );
 

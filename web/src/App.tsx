@@ -11,15 +11,11 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 // Lazy loaded page components
 const HomePage = lazy(() => import('./pages/Home').then((m) => ({ default: m.Home })));
 const PlansPage = lazy(() => import('./pages/Plans').then((m) => ({ default: m.PlansPage })));
-const BoardPage = lazy(() => import('./pages/Board').then((m) => ({ default: m.BoardPage })));
-const CrewsPage = lazy(() => import('./pages/Crews').then((m) => ({ default: m.CrewsPage })));
-const DesignPage = lazy(() => import('./pages/Design').then((m) => ({ default: m.DesignPage })));
-
-// Placeholders for remaining pages (will be swapped as each page is built)
-const ReportPage = lazy(() => import('./pages/Report').then((m) => ({ default: m.Report })));
 const AnalyticsPage = lazy(() => import('./pages/Analytics').then((m) => ({ default: m.Analytics })));
+const CrewsPage = lazy(() => import('./pages/Crews').then((m) => ({ default: m.CrewsPage })));
 const AuditPage = lazy(() => import('./pages/Audit').then((m) => ({ default: m.Audit })));
 const SafetyPage = lazy(() => import('./pages/Safety').then((m) => ({ default: m.Safety })));
+const DesignPage = lazy(() => import('./pages/Design').then((m) => ({ default: m.DesignPage })));
 
 const AppContent: React.FC = () => {
   const [helpOpen, setHelpOpen] = useState(false);
@@ -41,12 +37,10 @@ const AppContent: React.FC = () => {
         <Suspense fallback={<div className="container" style={{ padding: 'var(--space-8)' }}><LoadingSkeleton rows={4} height="32px" /></div>}>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/board" element={<BoardPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/plans" element={<PlansPage />} />
             <Route path="/crews" element={<CrewsPage />} />
             <Route path="/audit" element={<AuditPage />} />
-            <Route path="/report" element={<ReportPage />} />
             <Route path="/safety" element={<SafetyPage />} />
             <Route path="/design" element={<DesignPage />} />
           </Routes>
