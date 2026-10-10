@@ -48,3 +48,33 @@ def test_effective_exposure():
     assert get_effective_exposure_index(100.0, Workload.LIGHT) == 100.0
     assert get_effective_exposure_index(100.0, Workload.MODERATE) == 150.0
     assert get_effective_exposure_index(100.0, Workload.HEAVY) == 250.0
+
+
+def test_calculate_aqi_intermediate_floats_no_500_spike():
+    dt = datetime(2026, 5, 1, 12, 0, tzinfo=UTC)
+    # 30.3, 30.5, 60.5, 90.5 must not fall through to 500
+    r1 = HourlyReading(dt, 30, 50, 0, 0, pm2_5=30.3, pm10=44.1)
+    aqi1 = calculate_aqi(r1)
+    assert aqi1 is not None
+    assert 50.0 <= aqi1 <= 55.0  # Satisfactory, NOT 500
+    assert get_aqi_category(aqi1) == "Satisfactory"
+
+    r2 = HourlyReading(dt, 30, 50, 0, 0, pm2_5=30.5, pm10=None)
+    aqi2 = calculate_aqi(r2)
+    assert aqi2 is not None
+    assert 50.0 <= aqi2 <= 51.0
+
+    r3 = HourlyReading(dt, 30, 50, 0, 0, pm2_5=60.5, pm10=None)
+    aqi3 = calculate_aqi(r3)
+    assert aqi3 is not None
+    assert 100.0 <= aqi3 <= 102.0
+
+
+def test_chennai_scenario_aqi_not_500():
+    from chhaya_engine.scenarios import SCENARIOS, load_scenario_readings
+    sc = next(s for s in SCENARIOS if "chennai" in s.id)
+    readings = load_scenario_readings(sc)
+    aqis = [calculate_aqi(r) for r in readings]
+    assert all(a is not None for a in aqis)
+    assert max(aqis) < 100.0  # Chennai coastal cyclone precursor day has max AQI ~55, never 500
+
