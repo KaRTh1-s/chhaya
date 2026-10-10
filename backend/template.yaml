@@ -157,6 +157,38 @@ Resources:
             Path: /advise
             Method: POST
 
+  ApiFunctionErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: "Alarm if Chhaya API Lambda errors occur"
+      Namespace: "AWS/Lambda"
+      MetricName: "Errors"
+      Dimensions:
+        - Name: "FunctionName"
+          Value: !Ref ApiFunction
+      Statistic: "Sum"
+      ComparisonOperator: "GreaterThanOrEqualToThreshold"
+      Threshold: 1
+      EvaluationPeriods: 1
+      Period: 300
+      TreatMissingData: "notBreaching"
+
+  AdvisorFunctionErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: "Alarm if Chhaya Advisor Lambda errors occur"
+      Namespace: "AWS/Lambda"
+      MetricName: "Errors"
+      Dimensions:
+        - Name: "FunctionName"
+          Value: !Ref AdvisorFunction
+      Statistic: "Sum"
+      ComparisonOperator: "GreaterThanOrEqualToThreshold"
+      Threshold: 1
+      EvaluationPeriods: 1
+      Period: 300
+      TreatMissingData: "notBreaching"
+
 Outputs:
   ApiUrl:
     Description: Base URL for Chhaya HTTP API
@@ -164,4 +196,5 @@ Outputs:
   TableName:
     Description: DynamoDB Table Name
     Value: !Ref DataTable
+
 
