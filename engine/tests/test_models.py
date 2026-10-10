@@ -1,8 +1,16 @@
-from datetime import datetime, timezone
-from chhaya_engine.models import HourlyReading, JobType, Workload, SunExposure, create_worker_profile
+from datetime import UTC, datetime
+
+from chhaya_engine.models import (
+    HourlyReading,
+    JobType,
+    SunExposure,
+    Workload,
+    create_worker_profile,
+)
+
 
 def test_hourly_reading_to_dict():
-    dt = datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc)
+    dt = datetime(2026, 5, 1, 12, 0, tzinfo=UTC)
     hr = HourlyReading(dt, 35.0, 50.0, 800.0, 2.0, 50.0, 100.0)
     d = hr.to_dict()
     assert d["time"] == dt.isoformat()

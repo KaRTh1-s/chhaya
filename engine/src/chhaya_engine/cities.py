@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+
 
 @dataclass
 class City:
@@ -24,7 +24,7 @@ CITIES = [
     City("nagpur", "Nagpur", 21.1458, 79.0882, "Asia/Kolkata"),
 ]
 
-def get_city(city_id: str) -> Optional[City]:
+def get_city(city_id: str) -> City | None:
     city_id = city_id.lower().strip()
     for c in CITIES:
         if c.id == city_id:

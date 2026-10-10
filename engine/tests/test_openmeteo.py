@@ -1,7 +1,7 @@
-import json
 import pytest
-from datetime import datetime, timezone
+
 from chhaya_engine.clients.openmeteo import OpenMeteoClient
+
 
 def test_openmeteo_client_with_mock():
     # Mock fetcher

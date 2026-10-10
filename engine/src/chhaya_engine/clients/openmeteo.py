@@ -1,17 +1,19 @@
 import json
-import urllib.request
-import urllib.error
 import time
-from typing import List, Dict, Any
-from datetime import datetime, timezone, timedelta
+import urllib.error
+import urllib.request
+from datetime import datetime, timedelta, timezone
+from typing import Any
+
 from chhaya_engine.models import HourlyReading
+
 
 class OpenMeteoClient:
     def __init__(self, fetcher=None):
         # Allow injecting a fetcher for tests (mocking network)
         self.fetcher = fetcher if fetcher else self._default_fetcher
         
-    def _default_fetcher(self, url: str) -> Dict[str, Any]:
+    def _default_fetcher(self, url: str) -> dict[str, Any]:
         for attempt in range(3):
             try:
                 req = urllib.request.Request(url, headers={'User-Agent': 'Chhaya-Hackathon/0.1'})
@@ -19,10 +21,10 @@ class OpenMeteoClient:
                     return json.loads(response.read().decode('utf-8'))
             except urllib.error.URLError as e:
                 if attempt == 2:
-                    raise Exception(f"Failed to fetch {url}: {e}")
+                    raise RuntimeError(f"Failed to fetch {url}: {e}") from e
                 time.sleep(2 ** attempt)
 
-    def fetch_forecast(self, lat: float, lon: float) -> List[HourlyReading]:
+    def fetch_forecast(self, lat: float, lon: float) -> list[HourlyReading]:
         # Weather
         w_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&hourly=temperature_2m,relative_humidity_2m,shortwave_radiation,wind_speed_10m&timezone=auto&forecast_days=2&wind_speed_unit=ms"
         # Air Quality

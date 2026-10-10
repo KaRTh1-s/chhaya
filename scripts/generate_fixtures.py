@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timedelta, timezone
 
+
 def generate_fixture(filename, base_temp, max_temp_add, base_rh, max_rh_add, pm25_base, pm10_base, tz_offset):
     tz = timezone(timedelta(seconds=tz_offset))
     start = datetime(2026, 5, 1, 0, 0, tzinfo=tz)
