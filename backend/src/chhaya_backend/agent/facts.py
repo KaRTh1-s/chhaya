@@ -264,6 +264,8 @@ def build_facts_from_plan(plan: DayPlan | dict[str, Any]) -> Facts:
         freq_windows.append({"start": start_str, "end": end_str})
         allowed_numbers.update(_extract_numbers_from_str(start_str))
         allowed_numbers.update(_extract_numbers_from_str(end_str))
+        allowed_numbers.add(f"{start_str}-{end_str}")
+        allowed_numbers.add(f"{start_str[:2]}-{end_str[:2]}")
 
     hydration_guideline = str(raw_hydration.get("guideline", "Drink normally."))
     allowed_numbers.update(_extract_numbers_from_str(hydration_guideline))

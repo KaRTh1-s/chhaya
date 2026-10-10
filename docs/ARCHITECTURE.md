@@ -35,7 +35,7 @@ flowchart TD
     Facts --> RateCheck{"Daily Cap Reached? (>300 calls)"}
     RateCheck -->|Yes (daily_cap)| TemplateFallback["TemplateAdvisor (en/hi/ta)"]
     
-    RateCheck -->|No| BedrockConverse["Bedrock Converse API (Amazon Nova Micro / ap-south-1)"]
+    RateCheck -->|No| BedrockConverse["Bedrock Converse API (apac.amazon.nova-micro-v1:0 / ap-south-1)"]
     
     BedrockConverse --> Val1{"Strict Validator (Pass 1)"}
     Val1 -->|Valid JSON + Grounded Numbers + Citations| AdvisoryOutput["Advisory JSON Response (200 OK)"]
@@ -49,6 +49,9 @@ flowchart TD
     TemplateFallback --> AdvisoryOutput
     AdvisoryOutput --> AuditLog["Append-only Audit Log (No PII / No Prompt Text)"]
 ```
+
+> [!NOTE]
+> **Data Privacy & Model Routing**: The Bedrock integration utilizes Asia-Pacific regional inference profiles (`apac.amazon.nova-micro-v1:0`) which route dynamically across APAC AWS data centers for high availability. Strictly zero personal data, worker identifiers, or crew names are sent to the model—only computed anonymous plan facts (hourly temperatures, AQI levels, and schedule intervals).
 
 ## Grounding & Safety Validator Rules
 

@@ -337,18 +337,30 @@ components:
       properties:
         id:
           type: string
+          enum:
+            - delhi-heatwave-2025-06-09
+            - delhi-smog-2025-11-23
+            - chennai-humid-2025-05-31
+            - coimbatore-mild-2025-01-15
+          example: delhi-heatwave-2025-06-09
         label:
           type: string
+          example: Delhi Extreme Heatwave (Jun 2025)
         city_id:
           type: string
+          example: delhi
         date:
           type: string
+          example: '2025-06-09'
         max_temp_c:
           type: number
+          example: 43.7
         max_pm2_5:
           type: number
+          example: 163.0
         source:
           type: string
+          example: recorded
 
     PlanRequest:
       type: object
