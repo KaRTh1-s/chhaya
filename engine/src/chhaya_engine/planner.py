@@ -315,9 +315,9 @@ def plan_day(readings: list[HourlyReading], profile: WorkerProfile, city_label: 
 
     mask = {"needed": mask_needed, "type": "N95/FFP2" if mask_needed else "None"}
 
-    seek_help = [
-        "Stop work, move to shade, and call emergency services if you experience confusion, fainting, or stop sweating."
-    ]
+    seek_help = ["SEEK_HELP_HEAT_ILLNESS"]
+    if mask_needed or any("AIR" in r for h in hours for r in h.reasons):
+        seek_help.append("SEEK_HELP_AIR_POLLUTION")
 
     return DayPlan(
         city_label=city_label,
