@@ -1,0 +1,162 @@
+[
+  {
+    "component": "Heat",
+    "assumption": "Solar adjustment per kW/m\u00b2",
+    "value": "+2.0 \u00b0C per 1000 W/m\u00b2 (Full Sun)",
+    "why": "Calibrated against Liljegren outdoor physical model to reduce hot-dry bias.",
+    "source": "Calibration vs Liljegren (ECMWF thermofeel)",
+    "status": "Calibrated against Liljegren outdoor reference on 4 recorded days; not field-validated"
+  },
+  {
+    "component": "Heat",
+    "assumption": "Base offset calibration",
+    "value": "-4.5 \u00b0C base intercept correction",
+    "why": "Compensates for ABOM indoor approximation overestimation in hot-dry climates.",
+    "source": "Calibration vs Liljegren (ECMWF thermofeel)",
+    "status": "Calibrated against Liljegren outdoor reference on 4 recorded days; not field-validated"
+  },
+  {
+    "component": "Heat",
+    "assumption": "WBGT Safety Margin",
+    "value": "Not added (`0.0 \u00b0C`)",
+    "why": "Calibration audit against Liljegren across all 4 fixtures showed that for dangerous heat (WBGT $\\ge 28^\\circ\\text{C}$), the maximum underestimate was $0.90^\\circ\\text{C}$ (Chennai) and $0.47^\\circ\\text{C}$ (Delhi), neither exceeding the $1.5^\\circ\\text{C}$ threshold.",
+    "source": "`scripts/calibrate_wbgt.py` measurement",
+    "status": "Verified by measurement on 4 fixtures"
+  },
+  {
+    "component": "Heat",
+    "assumption": "WBGT continuous work limits",
+    "value": "Light: 30\u00b0C, Mod: 28\u00b0C, Heavy: 26\u00b0C",
+    "why": "Safe starting points for acclimatized workers",
+    "source": "NIOSH/ISO 7243",
+    "status": "Calibrated / Verified"
+  },
+  {
+    "component": "Heat",
+    "assumption": "Work/Rest tiers (delta = WBGT - limit)",
+    "value": "\u22640: Caution, \u22642: 45/15, \u22644: 30/30, \u22646: 15/45, >6: Avoid",
+    "why": "Standardized incremental heat stress reduction",
+    "source": "Adapted from standard charts",
+    "status": "Verified"
+  },
+  {
+    "component": "AQI",
+    "assumption": "Hourly PM as proxy",
+    "value": "Hourly PM2.5/PM10 interpolated directly into 24h breakpoints",
+    "why": "24-hour averages react too slowly to transient smog peaks",
+    "source": "Engineering decision",
+    "status": "Verified (Logic)"
+  },
+  {
+    "component": "AQI",
+    "assumption": "Workload multipliers",
+    "value": "Light: 1.0, Mod: 1.5, Heavy: 2.5",
+    "why": "Increased ventilation rate dramatically increases inhaled dose",
+    "source": "Respiratory physiology",
+    "status": "Verified"
+  },
+  {
+    "component": "Health",
+    "assumption": "Hydration guidance",
+    "value": "~250ml every 15-20 min during frequent windows; otherwise drink normally",
+    "why": "Derived ONLY from heat stress (WBGT caution or worse); air pollution escalation never triggers frequent hydration.",
+    "source": "Occupational Physiology / NIOSH",
+    "status": "Verified"
+  },
+  {
+    "component": "Schedule",
+    "assumption": "Recommended Blocks",
+    "value": "Up to 2 non-overlapping blocks (min 2h each, total \u2264 max_shift_hours)",
+    "why": "Minimises combined risk, strictly preferring WORK > CAUTION > REDUCED; never includes AVOID. Block status = worst hour inside it.",
+    "source": "Algorithmic Optimization",
+    "status": "Verified"
+  },
+  {
+    "component": "Agent",
+    "assumption": "Bedrock Model ID",
+    "value": "`apac.amazon.nova-micro-v1:0` (or `apac.anthropic.claude-3-5-sonnet-20241022-v2:0`)",
+    "why": "Ultra-fast inference, low-cost cross-region inference profile in `ap-south-1` / `us-east-1`.",
+    "source": "AWS Bedrock Regional Availability",
+    "status": "Verified"
+  },
+  {
+    "component": "Agent",
+    "assumption": "Daily LLM Call Cap",
+    "value": "300 calls/day (`MAX_LLM_CALLS_PER_DAY`)",
+    "why": "Prevents runaway inference costs. Excess requests gracefully fallback to `TemplateAdvisor`.",
+    "source": "Cost control policy",
+    "status": "Verified"
+  },
+  {
+    "component": "Agent",
+    "assumption": "Strict Grounding Verification",
+    "value": "1-5 sentences; evidence citations; allowed-numbers set; driving evidence match; Latin run check; medical blocklist",
+    "why": "Completely eliminates hallucinations and ungrounded safety advice.",
+    "source": "Safety Engineering",
+    "status": "Verified"
+  },
+  {
+    "component": "Agent",
+    "assumption": "Multilingual Localisation",
+    "value": "English, Hindi (`hi`), Tamil (`ta`)",
+    "why": "Full localization of cities, risk terms, window guidance, hydration, and seek-help lines.",
+    "source": "`i18n.py` / `docs/i18n_review.md`",
+    "status": "Machine-written, needs native speaker review"
+  },
+  {
+    "component": "Agent",
+    "assumption": "Prompt Versioning",
+    "value": "`PROMPT_VERSION = \"1.1.0\"`",
+    "why": "Tracks exact prompt template version in audit log and response payload for traceability.",
+    "source": "Governance",
+    "status": "Verified"
+  },
+  {
+    "component": "Stats",
+    "assumption": "Flagged Hours (`hours_flagged`)",
+    "value": "Count of AVOID or REDUCED(15/45) hours across generated DayPlans",
+    "why": "Operational metric identifying acute exposure hours flagged",
+    "source": "Operational Definition",
+    "status": "Verified"
+  },
+  {
+    "component": "Stats",
+    "assumption": "Lead Time (`avg_lead_time_hours`)",
+    "value": "Mean hours between plan generation and the start of the first flagged dangerous window",
+    "why": "Measures advance warning window for shift rescheduling",
+    "source": "Operational Definition",
+    "status": "Verified"
+  },
+  {
+    "component": "Backend",
+    "assumption": "Forecast cache TTL",
+    "value": "30 minutes (1800s)",
+    "why": "Open-Meteo models update hourly; 30m cache minimizes duplicate network calls",
+    "source": "System performance",
+    "status": "Verified"
+  },
+  {
+    "component": "Backend",
+    "assumption": "API Gateway Throttling",
+    "value": "Rate: 25 req/s, Burst: 50",
+    "why": "Protects backend against accidental traffic spikes in production",
+    "source": "Cost / Stability",
+    "status": "Verified"
+  },
+  {
+    "component": "Backend",
+    "assumption": "Audit log retention",
+    "value": "30 days TTL",
+    "why": "Allows historical auditing while automatically purging stale records",
+    "source": "Compliance",
+    "status": "Verified"
+  },
+  {
+    "component": "Security",
+    "assumption": "Write protection",
+    "value": "Constant-time `X-Chhaya-Passcode`",
+    "why": "Protects crew mutations and bulk writes from unauthorized callers",
+    "source": "Security baseline",
+    "status": "Verified"
+  }
+]

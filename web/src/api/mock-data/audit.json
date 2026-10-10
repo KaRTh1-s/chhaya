@@ -1,0 +1,48 @@
+{
+  "audit_events": [
+    {
+      "id": "aud_01jk982abc1",
+      "event_type": "PLAN_GENERATED",
+      "timestamp": "2026-10-10T08:45:12+05:30",
+      "details": {
+        "city_id": "delhi",
+        "job_type": "CONSTRUCTION",
+        "workload": "HEAVY",
+        "overall_risk": "EXTREME",
+        "hours_flagged": 5,
+        "modelled_data_source": "Open-Meteo / CAMS"
+      }
+    },
+    {
+      "id": "aud_01jk982abc2",
+      "event_type": "ADVISORY_GENERATED",
+      "timestamp": "2026-10-10T08:45:13+05:30",
+      "details": {
+        "model": "anthropic.claude-3-5-sonnet",
+        "language": "hi",
+        "validated": true,
+        "evidence_card_count": 4
+      }
+    },
+    {
+      "id": "aud_01jk982abc3",
+      "event_type": "CREW_CREATED",
+      "timestamp": "2026-10-10T08:30:00+05:30",
+      "details": {
+        "crew_id": "crw_south_delhi_masonry",
+        "city_id": "delhi",
+        "job_type": "CONSTRUCTION",
+        "size": 14
+      }
+    },
+    {
+      "id": "aud_01jk982abc4",
+      "event_type": "CACHE_REFRESH",
+      "timestamp": "2026-10-10T07:12:44+05:30",
+      "details": {
+        "location": "28.61_77.21",
+        "count": 24
+      }
+    }
+  ]
+}

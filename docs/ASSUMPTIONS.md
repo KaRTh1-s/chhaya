@@ -1,6 +1,6 @@
 # Assumptions & Heuristics
 
-This document logs every threshold, calibration parameter, and heuristic in Chhaya's engine and advisory agent to guarantee transparency.
+This document logs every threshold, calibration parameter, and heuristic in Chhaya's engine and advisory agent for complete operational transparency.
 
 | Component | Assumption/Heuristic | Value | Why | Source | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -18,7 +18,7 @@ This document logs every threshold, calibration parameter, and heuristic in Chha
 | **Agent** | Strict Grounding Verification | 1-5 sentences; evidence citations; allowed-numbers set; driving evidence match; Latin run check; medical blocklist | Completely eliminates hallucinations and ungrounded safety advice. | Safety Engineering | Verified |
 | **Agent** | Multilingual Localisation | English, Hindi (`hi`), Tamil (`ta`) | Full localization of cities, risk terms, window guidance, hydration, and seek-help lines. | `i18n.py` / `docs/i18n_review.md` | Machine-written, needs native speaker review |
 | **Agent** | Prompt Versioning | `PROMPT_VERSION = "1.1.0"` | Tracks exact prompt template version in audit log and response payload for traceability. | Governance | Verified |
-| **Stats**| Flagged Hours (`hours_flagged`) | Count of AVOID or REDUCED(15/45) hours across generated DayPlans | Accurately identifies acute exposure hours prevented | Operational Definition | Verified |
+| **Stats**| Flagged Hours (`hours_flagged`) | Count of AVOID or REDUCED(15/45) hours across generated DayPlans | Operational metric identifying acute exposure hours flagged | Operational Definition | Verified |
 | **Stats**| Lead Time (`avg_lead_time_hours`) | Mean hours between plan generation and the start of the first flagged dangerous window | Measures advance warning window for shift rescheduling | Operational Definition | Verified |
 | **Backend** | Forecast cache TTL | 30 minutes (1800s) | Open-Meteo models update hourly; 30m cache minimizes duplicate network calls | System performance | Verified |
 | **Backend** | API Gateway Throttling | Rate: 25 req/s, Burst: 50 | Protects backend against accidental traffic spikes in production | Cost / Stability | Verified |

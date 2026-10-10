@@ -1,0 +1,11 @@
+{
+  "plans_generated": 142,
+  "cities_covered": 12,
+  "hours_flagged": 864,
+  "avg_lead_time_hours": 4.8,
+  "crews_registered": 18,
+  "alerts_sent": 56,
+  "seeded": true,
+  "advisories_generated": 142,
+  "llm_first_pass_valid_rate": 0.96
+}

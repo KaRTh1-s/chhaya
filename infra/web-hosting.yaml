@@ -1,0 +1,226 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Chhaya - Static Web Application Hosting (S3, CloudFront OAC, Security Headers, SPA Routing)'
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Description: Environment stage for deployment (dev, staging, prod)
+
+  ApiBaseUrl:
+    Type: String
+    Default: ''
+    Description: Optional backend API URL to include in Content-Security-Policy connect-src
+
+  DomainName:
+    Type: String
+    Default: ''
+    Description: Optional custom domain name (e.g. app.chhaya.example)
+
+  AcmCertificateArn:
+    Type: String
+    Default: ''
+    Description: Optional ACM Certificate ARN in us-east-1 for custom domain HTTPS
+
+Conditions:
+  HasCustomDomain: !Not [!Equals [!Ref DomainName, '']]
+  HasAcmCert: !Not [!Equals [!Ref AcmCertificateArn, '']]
+  UseCustomDomainAndCert: !And [!Condition HasCustomDomain, !Condition HasAcmCert]
+
+Resources:
+  # 1. S3 Private Storage Bucket for Static Assets
+  WebBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'chhaya-web-${EnvironmentName}-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: project
+          Value: chhaya
+        - Key: event
+          Value: environmental-hacks
+        - Key: component
+          Value: web-frontend
+        - Key: env
+          Value: !Ref EnvironmentName
+
+  # 2. CloudFront Origin Access Control (OAC)
+  CloudFrontOAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub 'chhaya-web-oac-${EnvironmentName}'
+        Description: 'Origin Access Control for Chhaya S3 Static Web Bucket'
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  # 3. S3 Bucket Policy granting Read-Only access solely to CloudFront via OAC
+  WebBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WebBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontServicePrincipalReadOnly
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub '${WebBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${WebDistribution}'
+
+  # 4. CloudFront Security Response Headers Policy
+  SecurityHeadersPolicy:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: !Sub 'chhaya-web-security-headers-${EnvironmentName}'
+        Comment: 'HSTS, CSP, X-Frame-Options DENY, and Permissions-Policy for Chhaya Web'
+        SecurityHeadersConfig:
+          StrictTransportSecurity:
+            AccessControlMaxAgeSec: 31536000
+            IncludeSubdomains: true
+            Preload: true
+            Override: true
+          ContentTypeOptions:
+            Override: true
+          FrameOptions:
+            FrameOption: DENY
+            Override: true
+          ReferrerPolicy:
+            ReferrerPolicy: strict-origin-when-cross-origin
+            Override: true
+          ContentSecurityPolicy:
+            ContentSecurityPolicy: !Sub "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' ${ApiBaseUrl} https://*.amazonaws.com https://open-meteo.com https://*.open-meteo.com; frame-ancestors 'none';"
+            Override: true
+        CustomHeadersConfig:
+          Items:
+            - Header: Permissions-Policy
+              Value: 'geolocation=(self), camera=(), microphone=(), payment=()'
+              Override: true
+
+  # 5. CloudFront CDN Distribution
+  WebDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub 'Chhaya Web Frontend (${EnvironmentName})'
+        DefaultRootObject: index.html
+        HttpVersion: http2and3
+        PriceClass: PriceClass_100
+        Aliases: !If [UseCustomDomainAndCert, [!Ref DomainName], !Ref 'AWS::NoValue']
+        ViewerCertificate: !If
+          - UseCustomDomainAndCert
+          - AcmCertificateArn: !Ref AcmCertificateArn
+            SslSupportMethod: sni-only
+            MinimumProtocolVersion: TLSv1.2_2021
+          - CloudFrontDefaultCertificate: true
+        Origins:
+          - Id: S3Origin
+            DomainName: !GetAtt WebBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt CloudFrontOAC.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachedMethods:
+            - GET
+            - HEAD
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # Managed-CachingOptimized
+          ResponseHeadersPolicyId: !Ref SecurityHeadersPolicy
+          Compress: true
+        CacheBehaviors:
+          - PathPattern: index.html
+            TargetOriginId: S3Origin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            CachedMethods:
+              - GET
+              - HEAD
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # Managed-CachingDisabled
+            ResponseHeadersPolicyId: !Ref SecurityHeadersPolicy
+            Compress: true
+          - PathPattern: /assets/*
+            TargetOriginId: S3Origin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            CachedMethods:
+              - GET
+              - HEAD
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # Managed-CachingOptimized
+            ResponseHeadersPolicyId: !Ref SecurityHeadersPolicy
+            Compress: true
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 0
+      Tags:
+        - Key: project
+          Value: chhaya
+        - Key: event
+          Value: environmental-hacks
+        - Key: component
+          Value: web-frontend
+        - Key: env
+          Value: !Ref EnvironmentName
+
+Outputs:
+  BucketName:
+    Description: S3 Bucket Name holding static assets
+    Value: !Ref WebBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-BucketName'
+
+  DistributionId:
+    Description: CloudFront Distribution ID
+    Value: !Ref WebDistribution
+    Export:
+      Name: !Sub '${AWS::StackName}-DistributionId'
+
+  DistributionDomain:
+    Description: CloudFront Distribution Domain Name
+    Value: !GetAtt WebDistribution.DomainName
+    Export:
+      Name: !Sub '${AWS::StackName}-DistributionDomain'
+
+  SiteUrl:
+    Description: HTTPS URL of the static website
+    Value: !If
+      - UseCustomDomainAndCert
+      - !Sub 'https://${DomainName}'
+      - !Sub 'https://${WebDistribution.DomainName}'

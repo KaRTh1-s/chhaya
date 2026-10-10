@@ -79,6 +79,44 @@ The table uses `PAY_PER_REQUEST` billing with partition key `pk` (String) and so
 | **Daily LLM Cap** | `LLM_CALLS#<yyyy-mm-dd>` | `COUNT` | None | Atomic counter enforcing daily cost cap (300 calls/day default). |
 | **Audit Event** | `AUDIT#<yyyy-mm-dd>` | `<iso_timestamp>#<id>` | 30 days (`now + 30d`) | Append-only anonymized event log (`event_type`, `details_json`). Strictly no PII. |
 
+## Web Frontend Architecture (S3 + CloudFront OAC)
+
+The frontend is a static Single Page Application (SPA) built with React 19, TypeScript, and Vite. It is hosted on AWS using a decoupled, zero-server architecture:
+
+```mermaid
+flowchart TD
+    User["End User (Mobile / Desktop Browser)"] -->|HTTPS (TLS 1.3 / HTTP/3)| CF["CloudFront Distribution (Edge Locations)"]
+    
+    subgraph "CloudFront Edge Protection"
+        CF --> SHP["Security Headers Policy (HSTS, CSP, X-Frame DENY, Permissions)"]
+        CF --> SPA["Custom Error Rewriter (403/404 -> /index.html)"]
+    end
+    
+    subgraph "AWS S3 Private Origin"
+        CF -->|Origin Access Control (SigV4 Signed)| S3["Private S3 Web Bucket (SSE-AES256 Encrypted)"]
+        S3 --> Assets["/assets/* (1-Year Immutable Cache)"]
+        S3 --> HTML["/index.html (No-Cache Revalidation)"]
+    end
+
+    subgraph "Client-Side Resilience"
+        User --> BrowserApp["Chhaya Web App (React)"]
+        BrowserApp -->|Fetch /api/...| APIGW["API Gateway / Backend"]
+        BrowserApp -->|Network Error / Offline| MockEngine["Embedded Mock Engine (Delhi, Chennai, Coimbatore Recorded Fixtures)"]
+        MockEngine --> DemoBanner["Demo Fallback Banner ('Showing recorded demo data')"]
+    end
+```
+
+### Security & Delivery Controls
+1. **Private S3 Origin with OAC**: The S3 bucket blocks all public access (`BlockPublicPolicy: true`). S3 read access is granted exclusively to CloudFront via AWS Origin Access Control with SigV4 signing.
+2. **Security Headers**: Injected at CloudFront edge on every response:
+   - `Strict-Transport-Security`: `max-age=31536000; includeSubdomains; preload`
+   - `Content-Security-Policy`: Restricts scripts and connections to self and approved endpoints.
+   - `X-Frame-Options`: `DENY` (clickjacking prevention).
+   - `X-Content-Type-Options`: `nosniff`.
+   - `Permissions-Policy`: Restricts camera, microphone, and payment APIs.
+3. **SPA Routing**: CloudFront custom error responses intercept S3 403 and 404 status codes and rewrite to `/index.html` with HTTP 200, enabling clean client-side routing.
+4. **Resilient Offline Fallback**: If the backend API Gateway or network is unreachable, `apiClient` automatically engages the client-side recorded fixtures without crashing and displays a visible fallback banner.
+
 ## Endpoints
 
 - `GET /health` - Health check, runtime metadata, data mode, and version.
@@ -87,9 +125,10 @@ The table uses `PAY_PER_REQUEST` billing with partition key `pk` (String) and so
 - `POST /plan` - Computes 24-hour heat/air day plan with recommended blocks.
 - `POST /advise` - Generates validated multilingual plain-language advisory pinned to evidence cards.
 - `GET /board` - Multi-city, multi-job risk matrix (`?mode=live` or `?mode=replay`).
-- `GET /stats` - Real-time metrics on plans generated, flagged hours, advisories, and lead time.
+- `GET /stats` - Operational metrics on plans generated, flagged hours, advisories, and lead time.
 - `GET /audit` - Append-only system audit log (no personal data).
 - `GET /crews` - List registered anonymous crews.
 - `POST /crews` - Create crew profile (protected by `X-Chhaya-Passcode`).
 - `GET /crews/{id}` - Fetch crew details with live plan summary.
 - `DELETE /crews/{id}` - Remove crew profile (protected by `X-Chhaya-Passcode`).
+

@@ -1,0 +1,86 @@
+[
+  {
+    "id": "delhi",
+    "name": "Delhi",
+    "lat": 28.6139,
+    "lon": 77.209,
+    "state": "Delhi"
+  },
+  {
+    "id": "mumbai",
+    "name": "Mumbai",
+    "lat": 19.076,
+    "lon": 72.8777,
+    "state": "Maharashtra"
+  },
+  {
+    "id": "chennai",
+    "name": "Chennai",
+    "lat": 13.0827,
+    "lon": 80.2707,
+    "state": "Tamil Nadu"
+  },
+  {
+    "id": "coimbatore",
+    "name": "Coimbatore",
+    "lat": 11.0168,
+    "lon": 76.9558,
+    "state": "Tamil Nadu"
+  },
+  {
+    "id": "bengaluru",
+    "name": "Bengaluru",
+    "lat": 12.9716,
+    "lon": 77.5946,
+    "state": "Karnataka"
+  },
+  {
+    "id": "hyderabad",
+    "name": "Hyderabad",
+    "lat": 17.385,
+    "lon": 78.4867,
+    "state": "Telangana"
+  },
+  {
+    "id": "kolkata",
+    "name": "Kolkata",
+    "lat": 22.5726,
+    "lon": 88.3639,
+    "state": "West Bengal"
+  },
+  {
+    "id": "ahmedabad",
+    "name": "Ahmedabad",
+    "lat": 23.0225,
+    "lon": 72.5714,
+    "state": "Gujarat"
+  },
+  {
+    "id": "pune",
+    "name": "Pune",
+    "lat": 18.5204,
+    "lon": 73.8567,
+    "state": "Maharashtra"
+  },
+  {
+    "id": "jaipur",
+    "name": "Jaipur",
+    "lat": 26.9124,
+    "lon": 75.7873,
+    "state": "Rajasthan"
+  },
+  {
+    "id": "lucknow",
+    "name": "Lucknow",
+    "lat": 26.8467,
+    "lon": 80.9462,
+    "state": "Uttar Pradesh"
+  },
+  {
+    "id": "nagpur",
+    "name": "Nagpur",
+    "lat": 21.1458,
+    "lon": 79.0882,
+    "state": "Maharashtra"
+  }
+]
