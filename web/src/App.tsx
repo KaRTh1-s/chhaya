@@ -12,11 +12,11 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 const HomePage = lazy(() => import('./pages/Home').then((m) => ({ default: m.Home })));
 const PlansPage = lazy(() => import('./pages/Plans').then((m) => ({ default: m.PlansPage })));
 const BoardPage = lazy(() => import('./pages/Board').then((m) => ({ default: m.BoardPage })));
+const CrewsPage = lazy(() => import('./pages/Crews').then((m) => ({ default: m.CrewsPage })));
 const DesignPage = lazy(() => import('./pages/Design').then((m) => ({ default: m.DesignPage })));
 
 // Placeholders for remaining pages (will be swapped as each page is built)
 const AnalyticsPage = lazy(() => import('./pages/Placeholders').then((m) => ({ default: m.AnalyticsPage })));
-const CrewsPage = lazy(() => import('./pages/Placeholders').then((m) => ({ default: m.CrewsPage })));
 const AuditPage = lazy(() => import('./pages/Placeholders').then((m) => ({ default: m.AuditPage })));
 const ReportPage = lazy(() => import('./pages/Placeholders').then((m) => ({ default: m.ReportPage })));
 const SafetyPage = lazy(() => import('./pages/Placeholders').then((m) => ({ default: m.SafetyPage })));
