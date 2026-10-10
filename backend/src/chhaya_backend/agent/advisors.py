@@ -15,9 +15,11 @@ from botocore.exceptions import ClientError
 
 from chhaya_backend.agent.facts import Facts
 from chhaya_backend.agent.i18n import (
+    get_city_locative,
     get_city_name,
     get_risk_term,
     get_seek_help_lines,
+    get_status_description,
 )
 from chhaya_backend.agent.prompts import (
     PROMPT_VERSION,
@@ -78,7 +80,7 @@ class TemplateAdvisor(Advisor):
         start_time = time.perf_counter()
         lang = language.lower() if language in ("en", "hi", "ta") else "en"
         
-        city_display = get_city_name(facts.city_id or facts.city, lang=lang)
+        city_locative = get_city_locative(facts.city_id or facts.city, lang=lang)
         risk_word = get_risk_term(facts.overall_risk, lang=lang)
         
         peak_heat_c_str = f"{facts.peak_heat_c:.1f}"
@@ -103,19 +105,20 @@ class TemplateAdvisor(Advisor):
             # --- HINDI (Devanagari Script) ---
             # Sentence 1: Situation & Peak WBGT
             if facts.is_replay:
-                s1 = f"{city_display} में इस दर्ज किए गए दिन गर्मी का तनाव {risk_word} स्तर पर है, जहां {peak_heat_hour} बजे अधिकतम तापमान {peak_heat_c_str} °C तक पहुंचता है।"
+                s1 = f"{city_locative} इस दर्ज किए गए दिन स्थिति {risk_word} जोखिम पर है, जहां {peak_heat_hour} बजे अधिकतम WBGT {peak_heat_c_str} C तक पहुंचता है।"
             else:
-                s1 = f"{city_display} में आज गर्मी का जोखिम {risk_word} स्तर पर है, जहां {peak_heat_hour} बजे अधिकतम तापमान {peak_heat_c_str} °C तक पहुंचता है।"
+                s1 = f"{city_locative} आज स्थिति {risk_word} जोखिम पर है, जहां {peak_heat_hour} बजे अधिकतम WBGT {peak_heat_c_str} C तक पहुंचता है।"
             sentences_list.append(Sentence(s1, [peak_heat_eid]))
 
             # Sentence 2: Safe Work Windows
             if facts.recommended_blocks:
                 b = facts.recommended_blocks[0]
                 b_eid = get_hour_eid(b.start, peak_heat_eid)
-                s2 = f"लगातार काम करने के लिए सबसे सुरक्षित समय {b.start} से {b.end} तक है।"
+                b_desc = get_status_description(b.status, lang="hi")
+                s2 = f"काम करने के लिए सबसे सुरक्षित समय {b.start} से {b.end} तक है ({b_desc})।"
                 sentences_list.append(Sentence(s2, [b_eid]))
             elif facts.no_safe_window:
-                s2 = "आज लगातार काम के लिए कोई सुरक्षित समय नहीं है; कम गर्मी वाले घंटों में ही सीमित काम करें।"
+                s2 = "आज लगातार काम के लिए कोई सुरक्षित समय नहीं है; कम गर्मी वाले घंटों में ही काम सीमित रखें।"
                 sentences_list.append(Sentence(s2, [peak_heat_eid]))
             else:
                 s2 = "गर्मी के दौरान काम की गति धीमी रखें और नियमित रूप से आराम करें।"
@@ -126,7 +129,7 @@ class TemplateAdvisor(Advisor):
             if avoid_windows:
                 aw = avoid_windows[0]
                 aw_eid = get_hour_eid(aw.start, peak_heat_eid)
-                s3 = f"दोपहर {aw.start} से {aw.end} के बीच धूप में भारी शारीरिक मेहनत से बचें।"
+                s3 = f"{aw.start} से {aw.end} के बीच तेज गर्मी के कारण बाहर खुले में काम करने से बचें।"
                 sentences_list.append(Sentence(s3, [aw_eid]))
             else:
                 s3 = "धूप में लगातार काम करने से बचें और समय-समय पर छाया में विश्राम लें।"
@@ -134,30 +137,34 @@ class TemplateAdvisor(Advisor):
 
             # Sentence 4: Hydration
             if facts.hydration_frequent_windows:
-                s4 = "गर्मी के घंटों के दौरान हर 15-20 मिनट में लगभग 250 ml पानी पिएं; बाकी समय सामान्य रूप से पानी पिएं।"
+                hw = facts.hydration_frequent_windows[0]
+                hw_eid = get_hour_eid(hw["start"], peak_heat_eid)
+                s4 = f"{hw['start']}-{hw['end']} के दौरान हर 15-20 मिनट में लगभग 250 ml पानी पिएं; अन्यथा सामान्य रूप से पानी पिएं।"
+                sentences_list.append(Sentence(s4, [hw_eid]))
             else:
                 s4 = "अपनी शिफ्ट के दौरान नियमित अंतराल पर पानी पीकर शरीर में पानी की कमी न होने दें।"
-            sentences_list.append(Sentence(s4, [peak_heat_eid]))
+                sentences_list.append(Sentence(s4, [peak_heat_eid]))
 
             # Sentence 5: Air Pollution & Mask (if needed)
             if facts.mask_needed:
-                s5 = f"हवा में प्रदूषण सूचकांक {peak_aqi_val_str} तक पहुंचने के कारण बाहर काम करते समय {facts.mask_type} मास्क पहनें।"
+                s5 = f"हवा में प्रदूषण सूचकांक AQI {peak_aqi_val_str} तक पहुंचने के कारण बाहर काम करते समय {facts.mask_type} मास्क पहनें।"
                 sentences_list.append(Sentence(s5, [peak_aqi_eid]))
 
         elif lang == "ta":
             # --- TAMIL (Tamil Script) ---
             # Sentence 1: Situation & Peak WBGT
             if facts.is_replay:
-                s1 = f"{city_display} நகரில் இந்த பதிவு செய்யப்பட்ட நாளில் வெப்ப அழுத்தம் {risk_word} நிலையில் உள்ளது, மேலும் {peak_heat_hour} மணிக்கு அதிகபட்ச வெப்பநிலை {peak_heat_c_str} °C வரை உயர்கிறது."
+                s1 = f"{city_locative} இந்த பதிவு செய்யப்பட்ட நாளில் நிலைமை {risk_word} ஆபத்தை எட்டுகிறது, மேலும் {peak_heat_hour} மணிக்கு அதிகபட்ச WBGT {peak_heat_c_str} C வரை உயர்கிறது."
             else:
-                s1 = f"{city_display} நகரில் இன்று வெப்ப இடர் {risk_word} நிலையில் உள்ளது, மேலும் {peak_heat_hour} மணிக்கு அதிகபட்ச வெப்பநிலை {peak_heat_c_str} °C வரை உயர்கிறது."
+                s1 = f"{city_locative} இன்று நிலைமை {risk_word} ஆபத்தை எட்டுகிறது, மேலும் {peak_heat_hour} மணிக்கு அதிகபட்ச WBGT {peak_heat_c_str} C வரை உயர்கிறது."
             sentences_list.append(Sentence(s1, [peak_heat_eid]))
 
             # Sentence 2: Safe Work Windows
             if facts.recommended_blocks:
                 b = facts.recommended_blocks[0]
                 b_eid = get_hour_eid(b.start, peak_heat_eid)
-                s2 = f"தொடர்ந்து பணிபுரிய மிகவும் பாதுகாப்பான நேரம் {b.start} முதல் {b.end} வரை ஆகும்."
+                b_desc = get_status_description(b.status, lang="ta")
+                s2 = f"வேலை செய்ய சிறந்த நேரம் {b.start} முதல் {b.end} வரை ஆகும் ({b_desc})."
                 sentences_list.append(Sentence(s2, [b_eid]))
             elif facts.no_safe_window:
                 s2 = "இன்று தொடர்ந்து வேலை செய்ய பாதுகாப்பான நேரம் இல்லை; வெப்பம் குறைந்த நேரத்தில் மட்டும் குறைந்த வேலை செய்யவும்."
@@ -171,7 +178,7 @@ class TemplateAdvisor(Advisor):
             if avoid_windows:
                 aw = avoid_windows[0]
                 aw_eid = get_hour_eid(aw.start, peak_heat_eid)
-                s3 = f"நண்பகல் {aw.start} முதல் {aw.end} வரை கடுமையான வெளிப்புற உடல் உழைப்பைத் தவிர்க்கவும்."
+                s3 = f"{aw.start} முதல் {aw.end} வரை கடுமையான வெப்பம் காரணமாக வெளியில் வேலை செய்வதைத் தவிர்க்கவும்."
                 sentences_list.append(Sentence(s3, [aw_eid]))
             else:
                 s3 = "வெயிலில் தொடர்ந்து நிற்பதைத் தவிர்த்து அவ்வப்போது நிழலில் ஓய்வெடுக்கவும்."
@@ -179,30 +186,34 @@ class TemplateAdvisor(Advisor):
 
             # Sentence 4: Hydration
             if facts.hydration_frequent_windows:
-                s4 = "வெப்பம் மிகுந்த நேரங்களில் ஒவ்வொரு 15-20 நிமிடங்களுக்கும் சுமார் 250 ml தண்ணீர் குடிக்கவும்; மற்ற நேரங்களில் வழக்கம் போல் தண்ணீர் குடிக்கவும்."
+                hw = facts.hydration_frequent_windows[0]
+                hw_eid = get_hour_eid(hw["start"], peak_heat_eid)
+                s4 = f"{hw['start']}-{hw['end']} இடைவெளியில் ஒவ்வொரு 15-20 நிமிடங்களுக்கும் சுமார் 250 ml தண்ணீர் குடிக்கவும்; மற்ற நேரங்களில் வழக்கம் போல் குடிக்கவும்."
+                sentences_list.append(Sentence(s4, [hw_eid]))
             else:
                 s4 = "பணி நேரம் முழுவதும் சீரான இடைவெளியில் தண்ணீர் குடித்து நீர்ச்சத்துடன் இருக்கவும்."
-            sentences_list.append(Sentence(s4, [peak_heat_eid]))
+                sentences_list.append(Sentence(s4, [peak_heat_eid]))
 
             # Sentence 5: Air Pollution & Mask (if needed)
             if facts.mask_needed:
-                s5 = f"காற்று மாசுபாட்டுக் குறியீடு {peak_aqi_val_str} ஐ எட்டுவதால் வெளியில் பணிபுரியும் போது {facts.mask_type} முகக்கவசம் அணியவும்."
+                s5 = f"காற்று மாசுபாட்டுக் குறியீடு AQI {peak_aqi_val_str} ஐ எட்டுவதால் வெளியில் பணிபுரியும் போது {facts.mask_type} முகக்கவசம் அணியவும்."
                 sentences_list.append(Sentence(s5, [peak_aqi_eid]))
 
         else:
             # --- ENGLISH (Default) ---
             # Sentence 1: Situation & Peak WBGT
             if facts.is_replay:
-                s1 = f"On this recorded day in {city_display}, heat exposure is {risk_word} with peak WBGT reaching {peak_heat_c_str} °C around {peak_heat_hour}."
+                s1 = f"On this recorded day {city_locative}, conditions reach {risk_word} risk with peak WBGT reaching {peak_heat_c_str} C at {peak_heat_hour}."
             else:
-                s1 = f"Today in {city_display}, outdoor heat exposure is {risk_word} with peak WBGT reaching {peak_heat_c_str} °C around {peak_heat_hour}."
+                s1 = f"Today {city_locative}, conditions reach {risk_word} risk with peak WBGT reaching {peak_heat_c_str} C at {peak_heat_hour}."
             sentences_list.append(Sentence(s1, [peak_heat_eid]))
 
             # Sentence 2: Safe Work Windows
             if facts.recommended_blocks:
                 b = facts.recommended_blocks[0]
                 b_eid = get_hour_eid(b.start, peak_heat_eid)
-                s2 = f"The safest window for continuous shift work is from {b.start} to {b.end}."
+                b_desc = get_status_description(b.status, lang="en")
+                s2 = f"Best work hours are {b.start} to {b.end} ({b_desc})."
                 sentences_list.append(Sentence(s2, [b_eid]))
             elif facts.no_safe_window:
                 s2 = "There is no safe continuous work window today; restrict duties to cooler early morning hours."
@@ -216,7 +227,7 @@ class TemplateAdvisor(Advisor):
             if avoid_windows:
                 aw = avoid_windows[0]
                 aw_eid = get_hour_eid(aw.start, peak_heat_eid)
-                s3 = f"Avoid strenuous outdoor duties between {aw.start} and {aw.end} when heat strain peaks."
+                s3 = f"Avoid outdoor work between {aw.start} and {aw.end} due to extreme environmental heat stress."
                 sentences_list.append(Sentence(s3, [aw_eid]))
             else:
                 s3 = "Minimize direct sun exposure and take brief shade breaks during peak hours."
@@ -224,14 +235,17 @@ class TemplateAdvisor(Advisor):
 
             # Sentence 4: Hydration
             if facts.hydration_frequent_windows:
-                s4 = "Drink about 250 ml of water every 15-20 minutes during frequent windows; otherwise drink normally."
+                hw = facts.hydration_frequent_windows[0]
+                hw_eid = get_hour_eid(hw["start"], peak_heat_eid)
+                s4 = f"Drink about 250 ml of water every 15-20 minutes during {hw['start']}-{hw['end']}; otherwise drink normally."
+                sentences_list.append(Sentence(s4, [hw_eid]))
             else:
                 s4 = "Maintain regular hydration throughout your shift by drinking water periodically."
-            sentences_list.append(Sentence(s4, [peak_heat_eid]))
+                sentences_list.append(Sentence(s4, [peak_heat_eid]))
 
             # Sentence 5: Air Pollution & Mask (if needed)
             if facts.mask_needed:
-                s5 = f"Air pollution index reaches {peak_aqi_val_str}; wear an {facts.mask_type} mask when working outdoors."
+                s5 = f"Peak AQI reaches {peak_aqi_val_str}; wear an {facts.mask_type} mask when working outdoors."
                 sentences_list.append(Sentence(s5, [peak_aqi_eid]))
 
         # Translate seek help lines

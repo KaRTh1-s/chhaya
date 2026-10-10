@@ -6,6 +6,7 @@ Enforces:
 4. Driving evidence citation rule: a sentence containing numbers/times must cite at least one evidence card matching those numbers/times.
 5. Script verification and prohibition of 3+ consecutive Latin words in Hindi/Tamil.
 6. Medical claims blocklist.
+7. Prohibition of raw system codes (e.g. SEEK_HELP_*) and uppercase enum words (e.g. REDUCED, AVOID).
 """
 from dataclasses import dataclass
 import json
@@ -31,6 +32,12 @@ MEDICAL_BLOCKLIST = {
     ],
 }
 
+PROHIBITED_ENUM_WORDS = {
+    "REDUCED", "AVOID", "CAUTION", "EXTREME", "MODERATE", "LIGHT", "HEAVY", "FULL", "PARTIAL", "SHADE"
+}
+
+PROHIBITED_CODE_REGEX = re.compile(r"\b(SEEK_HELP_[A-Z0-9_]+|HEAT_[A-Z0-9_]+|AIR_[A-Z0-9_]+|REDUCED_\d+_\d+)\b")
+
 @dataclass(frozen=True)
 class ValidationResult:
     is_valid: bool
@@ -42,7 +49,6 @@ def normalize_digits(text: str) -> str:
 
 def extract_numbers_from_text(text: str) -> list[str]:
     normalized = normalize_digits(text)
-    # Match numbers (integers or decimals) and time ranges (e.g. 13:00, 13-17)
     tokens = []
     for m in re.finditer(r"\b\d+(?:\.\d+)?(?::\d{2})?\b", normalized):
         tokens.append(m.group(0))
@@ -53,11 +59,10 @@ def has_consecutive_latin_words(text: str, max_allowed: int = 2) -> bool:
     words = re.findall(r"\b[A-Za-z0-9\.\-\_]+\b", text)
     consecutive_count = 0
     for w in words:
-        # Check if word contains latin characters
         clean_w = w.upper().strip(".,:-_")
         if re.search(r"[A-Za-z]", clean_w):
             if clean_w in ALLOWED_LATIN_TOKENS:
-                consecutive_count = 0 # reset on technical tokens like N95, ml
+                consecutive_count = 0
             else:
                 consecutive_count += 1
                 if consecutive_count > max_allowed:
@@ -65,6 +70,21 @@ def has_consecutive_latin_words(text: str, max_allowed: int = 2) -> bool:
         else:
             consecutive_count = 0
     return False
+
+def contains_raw_codes_or_enums(text: str) -> str | None:
+    """Detect raw codes or uppercase enum words in worker-facing text."""
+    # Check regex for system codes
+    match = PROHIBITED_CODE_REGEX.search(text)
+    if match:
+        return f"contains raw system code '{match.group(0)}'"
+    
+    # Check whole-word uppercase enums
+    words = re.findall(r"\b[A-Z_]{3,}\b", text)
+    for w in words:
+        clean_w = w.strip()
+        if clean_w in PROHIBITED_ENUM_WORDS:
+            return f"contains raw enum word '{clean_w}'"
+    return None
 
 def is_valid_script(text: str, language: str) -> bool:
     if language == "en":
@@ -129,6 +149,11 @@ def validate_advisory_json(
             return ValidationResult(False, [], f"Sentence {idx+1} length ({len(text)}) outside limits [5, 350]")
         total_length += len(text)
 
+        # Raw codes & enum words check
+        raw_code_err = contains_raw_codes_or_enums(text)
+        if raw_code_err:
+            return ValidationResult(False, [], f"Sentence {idx+1} {raw_code_err}")
+
         # 3. Evidence ID verification
         if not isinstance(ev_ids, list) or len(ev_ids) == 0:
             return ValidationResult(False, [], f"Sentence {idx+1} has no evidence_ids cited")
@@ -152,14 +177,11 @@ def validate_advisory_json(
                 return ValidationResult(False, [], f"Sentence {idx+1} contains ungrounded number '{num}'")
 
         # 5. Driving Evidence Citation Rule:
-        # If sentence contains numbers or times, at least one cited evidence card must contain matching numbers/times
-        # (Exclude universal counts like "250 ml", "15-20 min" hydration guidelines)
         time_or_metric_nums = [
             n for n in extracted_nums 
             if n not in ("250", "15", "20", "15-20", "30", "45", "1", "2", "3", "4", "5")
         ]
         if time_or_metric_nums:
-            # Check if any cited evidence card contains at least one of these numbers/times
             matched_citation = False
             for eid in ev_ids:
                 card_nums = ev_map.get(eid, set())
