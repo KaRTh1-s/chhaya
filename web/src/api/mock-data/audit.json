@@ -9,7 +9,8 @@
         "job_type": "CONSTRUCTION",
         "workload": "HEAVY",
         "overall_risk": "EXTREME",
-        "hours_flagged": 5
+        "hours_flagged": 5,
+        "modelled_data_source": "Open-Meteo / CAMS"
       }
     },
     {

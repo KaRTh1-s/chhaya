@@ -1,22 +1,25 @@
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import { CursorGlow } from './components/CursorGlow';
+import { LoadingSkeleton, OfflineBanner } from './components/Feedback';
 import { Footer } from './components/Footer';
 import { HelpButton } from './components/HelpButton';
 import { NavPill } from './components/NavPill';
 import { TopBanner } from './components/TopBanner';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { DesignPage } from './pages/Design';
-import { Home } from './pages/Home';
-import {
-  AnalyticsPage,
-  AuditPage,
-  CrewsPage,
-  PlansPage,
-  ReportPage,
-  RiskBoardPage,
-  SafetyPage,
-} from './pages/Placeholders';
+
+// Lazy loaded page components
+const HomePage = lazy(() => import('./pages/Home').then((m) => ({ default: m.Home })));
+const PlansPage = lazy(() => import('./pages/Plans').then((m) => ({ default: m.PlansPage })));
+const DesignPage = lazy(() => import('./pages/Design').then((m) => ({ default: m.DesignPage })));
+
+// Placeholders for remaining pages (will be swapped as each page is built)
+const RiskBoardPage = lazy(() => import('./pages/Placeholders').then((m) => ({ default: m.RiskBoardPage })));
+const AnalyticsPage = lazy(() => import('./pages/Placeholders').then((m) => ({ default: m.AnalyticsPage })));
+const CrewsPage = lazy(() => import('./pages/Placeholders').then((m) => ({ default: m.CrewsPage })));
+const AuditPage = lazy(() => import('./pages/Placeholders').then((m) => ({ default: m.AuditPage })));
+const ReportPage = lazy(() => import('./pages/Placeholders').then((m) => ({ default: m.ReportPage })));
+const SafetyPage = lazy(() => import('./pages/Placeholders').then((m) => ({ default: m.SafetyPage })));
 
 const AppContent: React.FC = () => {
   const [helpOpen, setHelpOpen] = useState(false);
@@ -28,21 +31,26 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="app-layout">
+      <OfflineBanner />
       <TopBanner />
       <NavPill />
       <CursorGlow />
 
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/board" element={<RiskBoardPage />} />
-        <Route path="/analytics" element={<AnalyticsPage />} />
-        <Route path="/plans" element={<PlansPage />} />
-        <Route path="/crews" element={<CrewsPage />} />
-        <Route path="/audit" element={<AuditPage />} />
-        <Route path="/report" element={<ReportPage />} />
-        <Route path="/safety" element={<SafetyPage />} />
-        <Route path="/design" element={<DesignPage />} />
-      </Routes>
+      <main style={{ minHeight: '70vh' }}>
+        <Suspense fallback={<div className="container" style={{ padding: 'var(--space-8)' }}><LoadingSkeleton rows={4} height="32px" /></div>}>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/board" element={<RiskBoardPage />} />
+            <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/plans" element={<PlansPage />} />
+            <Route path="/crews" element={<CrewsPage />} />
+            <Route path="/audit" element={<AuditPage />} />
+            <Route path="/report" element={<ReportPage />} />
+            <Route path="/safety" element={<SafetyPage />} />
+            <Route path="/design" element={<DesignPage />} />
+          </Routes>
+        </Suspense>
+      </main>
 
       <HelpButton isOpen={helpOpen} onToggle={() => setHelpOpen(!helpOpen)} />
       <Footer />

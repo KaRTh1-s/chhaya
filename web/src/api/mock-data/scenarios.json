@@ -1,7 +1,7 @@
 [
   {
     "id": "delhi-heatwave-2025-06-09",
-    "label": "Delhi Heatwave (43.7\u00b0C recorded peak)",
+    "label": "Delhi Extreme Heatwave (43.7\u00b0C recorded peak)",
     "city_id": "delhi",
     "date": "2025-06-09",
     "max_temp_c": 43.7,
@@ -9,7 +9,7 @@
   },
   {
     "id": "delhi-smog-2025-11-23",
-    "label": "Delhi Severe Winter Smog (AQI 400+)",
+    "label": "Delhi Winter Smog Emergency (AQI 400+)",
     "city_id": "delhi",
     "date": "2025-11-23",
     "max_temp_c": 26.2,

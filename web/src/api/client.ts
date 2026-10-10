@@ -2,6 +2,7 @@ import { mockApi } from './mock';
 import type {
   AdviseRequest,
   AdviseResponse,
+  AssumptionItem,
   AuditEvent,
   BoardResponse,
   City,
@@ -84,7 +85,7 @@ export const apiClient = {
     return request('/cities', { method: 'GET' }, () => mockApi.getCities());
   },
 
-  getScenarios: (): Promise<Scenario[]> => {
+  getScenarios: (): Promise<{ scenarios: Scenario[] }> => {
     return request('/scenarios', { method: 'GET' }, () => mockApi.getScenarios());
   },
 
@@ -92,7 +93,7 @@ export const apiClient = {
     return request('/stats', { method: 'GET' }, () => mockApi.getStats());
   },
 
-  getBoard: (mode: 'live' | 'replay' = 'replay'): Promise<BoardResponse> => {
+  getBoard: (mode: 'live' | 'replay' = 'live'): Promise<BoardResponse> => {
     return request(`/board?mode=${mode}`, { method: 'GET' }, () => mockApi.getBoard(mode));
   },
 
@@ -126,7 +127,11 @@ export const apiClient = {
     );
   },
 
-  createCrew: (crew: Partial<Crew>, passcode: string = 'demo-passcode'): Promise<{ crew: Crew }> => {
+  getAssumptions: (): Promise<AssumptionItem[]> => {
+    return mockApi.getAssumptions();
+  },
+
+  createCrew: (crew: Partial<Crew>, passcode: string = 'demo'): Promise<{ crew: Crew }> => {
     return request(
       '/crews',
       {
@@ -137,6 +142,19 @@ export const apiClient = {
         body: JSON.stringify(crew),
       },
       () => mockApi.createCrew(crew)
+    );
+  },
+
+  deleteCrew: (crewId: string, passcode: string = 'demo'): Promise<{ deleted: boolean; crew_id: string }> => {
+    return request(
+      `/crews/${crewId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'X-Chhaya-Passcode': passcode,
+        },
+      },
+      () => mockApi.deleteCrew(crewId)
     );
   },
 };

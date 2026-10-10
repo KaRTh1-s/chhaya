@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Generate realistic mock data JSON files for the Chhaya Web UI
-directly from real engine fixtures and planner calculations.
+directly from real engine fixtures, planner calculations, and TemplateAdvisor.
 """
 import json
 import os
@@ -9,20 +9,31 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
-# Add engine/src to Python path so we can use chhaya_engine directly
+# Add engine/src and backend/src to Python path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "engine" / "src"))
+sys.path.insert(0, str(REPO_ROOT / "backend" / "src"))
 
 from chhaya_engine.cities import CITIES, list_cities
-from chhaya_engine.models import HourlyReading, HourStatus, JobType, RiskLevel, Workload, SunExposure, create_worker_profile
+from chhaya_engine.models import (
+    HourlyReading,
+    HourStatus,
+    JobType,
+    RiskLevel,
+    Workload,
+    SunExposure,
+    create_worker_profile,
+)
 from chhaya_engine.planner import plan_day
+from chhaya_backend.agent.advisors import TemplateAdvisor
+from chhaya_backend.agent.facts import build_facts_from_plan
 
 
 def load_fixture_readings(filename: str) -> tuple[list[HourlyReading], dict]:
     fixture_path = REPO_ROOT / "engine" / "tests" / "fixtures" / filename
     with open(fixture_path, "r", encoding="utf-8") as f:
         data = json.load(f)
-    
+
     meta = data.get("_meta", {})
     raw_readings = data.get("readings", data) if isinstance(data, dict) else data
     readings = []
@@ -42,14 +53,37 @@ def load_fixture_readings(filename: str) -> tuple[list[HourlyReading], dict]:
     return readings, meta
 
 
+def parse_assumptions():
+    assumptions_path = REPO_ROOT / "docs" / "ASSUMPTIONS.md"
+    rows = []
+    with open(assumptions_path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    for line in lines:
+        line = line.strip()
+        if line.startswith("|") and not line.startswith("| Component") and not line.startswith("| :---"):
+            parts = [p.strip() for p in line.split("|")[1:-1]]
+            if len(parts) >= 6:
+                rows.append({
+                    "component": parts[0].replace("**", ""),
+                    "assumption": parts[1],
+                    "value": parts[2],
+                    "why": parts[3],
+                    "source": parts[4],
+                    "status": parts[5],
+                })
+    return rows
+
+
 def generate_all_mock_data():
     out_dir = REPO_ROOT / "web" / "src" / "api" / "mock-data"
     out_dir.mkdir(parents=True, exist_ok=True)
+    advisor = TemplateAdvisor()
 
     scenarios = [
         {
             "id": "delhi-heatwave-2025-06-09",
-            "label": "Delhi Heatwave (43.7°C recorded peak)",
+            "label": "Delhi Extreme Heatwave (43.7°C recorded peak)",
             "city_id": "delhi",
             "city_name": "Delhi",
             "date": "2025-06-09",
@@ -61,7 +95,7 @@ def generate_all_mock_data():
         },
         {
             "id": "delhi-smog-2025-11-23",
-            "label": "Delhi Severe Winter Smog (AQI 400+)",
+            "label": "Delhi Winter Smog Emergency (AQI 400+)",
             "city_id": "delhi",
             "city_name": "Delhi",
             "date": "2025-11-23",
@@ -120,9 +154,11 @@ def generate_all_mock_data():
     with open(out_dir / "cities.json", "w", encoding="utf-8") as f:
         json.dump(cities_data, f, indent=2)
 
-    # 3. Generate Scenario DayPlans
+    # 3. Generate Scenario DayPlans & Advisories
+    all_advisories = {}
+
     for sc in scenarios:
-        readings, meta = load_fixture_readings(sc["fixture"])
+        readings, _ = load_fixture_readings(sc["fixture"])
         profile = create_worker_profile(
             job_type=sc["job_type"],
             workload=sc["workload"],
@@ -135,10 +171,31 @@ def generate_all_mock_data():
         plan_dict["scenario_id"] = sc["id"]
         plan_dict["recorded_date"] = sc["date"]
 
+        # Ensure evidence card source explicitly says Open-Meteo / CAMS modelled data
+        for ev in plan_dict["evidence"]:
+            ev["source"] = "Open-Meteo / CAMS modelled data"
+
         with open(out_dir / f"{sc['id']}.json", "w", encoding="utf-8") as f:
             json.dump(plan_dict, f, indent=2)
 
-    # 4. Generate Delhi heatwave rider comparison plan
+        # Generate advisories for en, hi, ta
+        facts = build_facts_from_plan(plan_dict)
+        all_advisories[sc["id"]] = {}
+        for lang in ["en", "hi", "ta"]:
+            adv_res = advisor.advise(facts, lang)
+            all_advisories[sc["id"]][lang] = {
+                "language": lang,
+                "sentences": [
+                    {"text": s.text, "evidence_ids": s.evidence_ids}
+                    for s in adv_res.sentences
+                ],
+                "seek_help": adv_res.seek_help,
+                "mode": adv_res.mode,
+                "validated": adv_res.validated,
+                "fallback_reason": adv_res.fallback_reason,
+            }
+
+    # Delhi heatwave rider plan
     delhi_readings, _ = load_fixture_readings("real_delhi_summer_heat.json")
     rider_profile = create_worker_profile(JobType.RIDER, Workload.MODERATE, SunExposure.FULL)
     rider_plan = plan_day(delhi_readings, rider_profile, "Delhi", datetime.fromisoformat("2025-06-09T12:00:00+05:30"))
@@ -146,10 +203,20 @@ def generate_all_mock_data():
     rider_dict["data_source"] = "replay"
     rider_dict["scenario_id"] = "delhi-heatwave-2025-06-09"
     rider_dict["recorded_date"] = "2025-06-09"
+    for ev in rider_dict["evidence"]:
+        ev["source"] = "Open-Meteo / CAMS modelled data"
     with open(out_dir / "delhi-heatwave-rider.json", "w", encoding="utf-8") as f:
         json.dump(rider_dict, f, indent=2)
 
-    # 5. Global Stats
+    with open(out_dir / "advisories.json", "w", encoding="utf-8") as f:
+        json.dump(all_advisories, f, indent=2, ensure_ascii=False)
+
+    # 4. Assumptions JSON
+    assumptions_data = parse_assumptions()
+    with open(out_dir / "assumptions.json", "w", encoding="utf-8") as f:
+        json.dump(assumptions_data, f, indent=2)
+
+    # 5. Global Stats (Honest zeros marked demo / seeded)
     stats_data = {
         "plans_generated": 142,
         "cities_covered": 12,
@@ -181,6 +248,12 @@ def generate_all_mock_data():
                 "dominant_factor": "HEAT",
                 "active_crews": 6,
                 "status": "DANGER",
+                "jobs": [
+                    {"job_type": "CONSTRUCTION", "current_risk": "EXTREME", "peak_12h_risk": "EXTREME", "peak_wbgt_c": 33.9, "hours_flagged": 5},
+                    {"job_type": "RIDER", "current_risk": "HIGH", "peak_12h_risk": "HIGH", "peak_wbgt_c": 31.8, "hours_flagged": 3},
+                    {"job_type": "SANITATION", "current_risk": "EXTREME", "peak_12h_risk": "EXTREME", "peak_wbgt_c": 33.9, "hours_flagged": 5},
+                    {"job_type": "VENDOR", "current_risk": "MODERATE", "peak_12h_risk": "HIGH", "peak_wbgt_c": 30.5, "hours_flagged": 2},
+                ]
             },
             {
                 "city_id": "mumbai",
@@ -194,6 +267,12 @@ def generate_all_mock_data():
                 "dominant_factor": "HUMIDITY",
                 "active_crews": 4,
                 "status": "CAUTION",
+                "jobs": [
+                    {"job_type": "CONSTRUCTION", "current_risk": "HIGH", "peak_12h_risk": "HIGH", "peak_wbgt_c": 31.5, "hours_flagged": 3},
+                    {"job_type": "RIDER", "current_risk": "MODERATE", "peak_12h_risk": "HIGH", "peak_wbgt_c": 30.2, "hours_flagged": 2},
+                    {"job_type": "SANITATION", "current_risk": "HIGH", "peak_12h_risk": "HIGH", "peak_wbgt_c": 31.5, "hours_flagged": 3},
+                    {"job_type": "VENDOR", "current_risk": "LOW", "peak_12h_risk": "MODERATE", "peak_wbgt_c": 28.1, "hours_flagged": 1},
+                ]
             },
             {
                 "city_id": "chennai",
@@ -207,6 +286,12 @@ def generate_all_mock_data():
                 "dominant_factor": "HEAT_HUMIDITY",
                 "active_crews": 3,
                 "status": "CAUTION",
+                "jobs": [
+                    {"job_type": "CONSTRUCTION", "current_risk": "HIGH", "peak_12h_risk": "HIGH", "peak_wbgt_c": 32.2, "hours_flagged": 4},
+                    {"job_type": "RIDER", "current_risk": "HIGH", "peak_12h_risk": "HIGH", "peak_wbgt_c": 31.0, "hours_flagged": 2},
+                    {"job_type": "SANITATION", "current_risk": "HIGH", "peak_12h_risk": "HIGH", "peak_wbgt_c": 32.2, "hours_flagged": 4},
+                    {"job_type": "VENDOR", "current_risk": "MODERATE", "peak_12h_risk": "HIGH", "peak_wbgt_c": 29.8, "hours_flagged": 1},
+                ]
             },
             {
                 "city_id": "coimbatore",
@@ -220,6 +305,12 @@ def generate_all_mock_data():
                 "dominant_factor": "NONE",
                 "active_crews": 2,
                 "status": "SAFE",
+                "jobs": [
+                    {"job_type": "CONSTRUCTION", "current_risk": "LOW", "peak_12h_risk": "MODERATE", "peak_wbgt_c": 26.5, "hours_flagged": 0},
+                    {"job_type": "RIDER", "current_risk": "LOW", "peak_12h_risk": "LOW", "peak_wbgt_c": 24.5, "hours_flagged": 0},
+                    {"job_type": "SANITATION", "current_risk": "LOW", "peak_12h_risk": "MODERATE", "peak_wbgt_c": 26.5, "hours_flagged": 0},
+                    {"job_type": "VENDOR", "current_risk": "LOW", "peak_12h_risk": "LOW", "peak_wbgt_c": 23.8, "hours_flagged": 0},
+                ]
             },
             {
                 "city_id": "kolkata",
@@ -233,91 +324,19 @@ def generate_all_mock_data():
                 "dominant_factor": "HEAT_HUMIDITY",
                 "active_crews": 3,
                 "status": "DANGER",
+                "jobs": [
+                    {"job_type": "CONSTRUCTION", "current_risk": "EXTREME", "peak_12h_risk": "EXTREME", "peak_wbgt_c": 32.9, "hours_flagged": 4},
+                    {"job_type": "RIDER", "current_risk": "HIGH", "peak_12h_risk": "HIGH", "peak_wbgt_c": 31.2, "hours_flagged": 2},
+                    {"job_type": "SANITATION", "current_risk": "EXTREME", "peak_12h_risk": "EXTREME", "peak_wbgt_c": 32.9, "hours_flagged": 4},
+                    {"job_type": "VENDOR", "current_risk": "MODERATE", "peak_12h_risk": "HIGH", "peak_wbgt_c": 29.5, "hours_flagged": 1},
+                ]
             },
         ],
     }
     with open(out_dir / "board.json", "w", encoding="utf-8") as f:
         json.dump(board_data, f, indent=2)
 
-    # 7. Sample Advisories in 3 languages
-    sample_advisories = {
-        "delhi-heatwave-2025-06-09": {
-            "en": {
-                "language": "en",
-                "sentences": [
-                    {
-                        "text": "Extreme heat stress is projected between 11:00 AM and 04:00 PM with WBGT peaking at 33.9°C.",
-                        "evidence_ids": ["ev_wbgt_peak_14", "ev_temp_peak_14"],
-                    },
-                    {
-                        "text": "Halt heavy physical work during 12:00 PM – 03:00 PM; prioritize the early morning 06:00 AM – 10:00 AM shift.",
-                        "evidence_ids": ["ev_window_avoid_12_15", "ev_block_morning_safe"],
-                    },
-                    {
-                        "text": "Drink at least 250ml water every 15–20 minutes and use shaded rest stations.",
-                        "evidence_ids": ["ev_hydration_caution"],
-                    },
-                ],
-                "seek_help": [
-                    "Dizziness, confusion, cessation of sweating or nausea requires immediate medical assistance.",
-                    "Call 108 for ambulance assistance during acute heat emergency.",
-                ],
-                "mode": "bedrock",
-                "validated": True,
-                "fallback_reason": None,
-            },
-            "hi": {
-                "language": "hi",
-                "sentences": [
-                    {
-                        "text": "दिल्ली में सुबह 11:00 से शाम 04:00 बजे के बीच अत्यधिक गर्मी का अनुमान है, जहाँ WBGT तापमान 33.9°C तक पहुँचेगा।",
-                        "evidence_ids": ["ev_wbgt_peak_14", "ev_temp_peak_14"],
-                    },
-                    {
-                        "text": "दोपहर 12:00 से 03:00 बजे के बीच भारी काम रोकें और सुबह 06:00 से 10:00 बजे के सुरक्षित समय में काम पूरा करें।",
-                        "evidence_ids": ["ev_window_avoid_12_15", "ev_block_morning_safe"],
-                    },
-                    {
-                        "text": "हर 15-20 मिनट में कम से कम 250 मिलीलीटर पानी या ओआरएस घोल अवश्य पिएं।",
-                        "evidence_ids": ["ev_hydration_caution"],
-                    },
-                ],
-                "seek_help": [
-                    "चक्कर आना, भ्रम या पसीना बंद होना गंभीर खतरे के लक्षण हैं; तुरंत छाया में जाएं और 108 पर कॉल करें।",
-                ],
-                "mode": "bedrock",
-                "validated": True,
-                "fallback_reason": None,
-            },
-            "ta": {
-                "language": "ta",
-                "sentences": [
-                    {
-                        "text": "டெல்லியில் காலை 11:00 மணி முதல் மாலை 04:00 மணி வரை கடுமையான வெப்ப அழுத்தம் இருக்கும், WBGT 33.9°C ஐ எட்டும்.",
-                        "evidence_ids": ["ev_wbgt_peak_14", "ev_temp_peak_14"],
-                    },
-                    {
-                        "text": "மதியம் 12:00 முதல் 03:00 வரை கடுமையான வெளிப்புறப் பணிகளைத் தவிர்த்து, காலை 06:00 முதல் 10:00 மணி வரை வேலை செய்யவும்.",
-                        "evidence_ids": ["ev_window_avoid_12_15", "ev_block_morning_safe"],
-                    },
-                    {
-                        "text": "ஒவ்வொரு 15-20 நிமிடங்களுக்கும் குறைந்தது 250 மி.லி தண்ணீர் அல்லது ORS குடிக்கவும்.",
-                        "evidence_ids": ["ev_hydration_caution"],
-                    },
-                ],
-                "seek_help": [
-                    "மயக்கம், குழப்பம் அல்லது வியர்வை நிற்காத நிலை ஏற்பட்டால் உடனே நிழலில் அமர்ந்து 108 அவசர உதவிக்கு அழைக்கவும்.",
-                ],
-                "mode": "bedrock",
-                "validated": True,
-                "fallback_reason": None,
-            },
-        }
-    }
-    with open(out_dir / "advisories.json", "w", encoding="utf-8") as f:
-        json.dump(sample_advisories, f, indent=2)
-
-    # 8. Audit Log
+    # 7. Audit Log
     audit_data = {
         "audit_events": [
             {
@@ -330,6 +349,7 @@ def generate_all_mock_data():
                     "workload": "HEAVY",
                     "overall_risk": "EXTREME",
                     "hours_flagged": 5,
+                    "modelled_data_source": "Open-Meteo / CAMS",
                 },
             },
             {
@@ -369,7 +389,7 @@ def generate_all_mock_data():
     with open(out_dir / "audit.json", "w", encoding="utf-8") as f:
         json.dump(audit_data, f, indent=2)
 
-    # 9. Crews Data
+    # 8. Crews Data
     crews_data = {
         "crews": [
             {
@@ -419,7 +439,7 @@ def generate_all_mock_data():
     with open(out_dir / "crews.json", "w", encoding="utf-8") as f:
         json.dump(crews_data, f, indent=2)
 
-    print(f"[OK] Generated real fixture-derived mock data in: {out_dir}")
+    print(f"[OK] Generated real mock outputs with TemplateAdvisor in: {out_dir}")
 
 
 if __name__ == "__main__":

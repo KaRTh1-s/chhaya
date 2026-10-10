@@ -1,6 +1,7 @@
 import type {
   AdviseRequest,
   AdviseResponse,
+  AssumptionItem,
   AuditEvent,
   BoardResponse,
   City,
@@ -14,6 +15,7 @@ import type {
 } from './types';
 
 import advisoriesData from './mock-data/advisories.json';
+import assumptionsData from './mock-data/assumptions.json';
 import auditData from './mock-data/audit.json';
 import boardData from './mock-data/board.json';
 import chennaiHumidPlan from './mock-data/chennai-humid-2025-05-31.json';
@@ -37,7 +39,7 @@ export const mockApi = {
   getHealth: async (): Promise<HealthResponse> => {
     return {
       status: 'ok',
-      version: '0.2.0',
+      version: '0.2.1',
       region: 'ap-south-1',
       data_mode: 'replay',
       time: new Date().toISOString(),
@@ -48,16 +50,17 @@ export const mockApi = {
     return { cities: citiesData as City[] };
   },
 
-  getScenarios: async (): Promise<Scenario[]> => {
-    return scenariosData as Scenario[];
+  getScenarios: async (): Promise<{ scenarios: Scenario[] }> => {
+    return { scenarios: scenariosData as Scenario[] };
   },
 
   getStats: async (): Promise<GlobalStats> => {
     return statsData as GlobalStats;
   },
 
-  getBoard: async (_mode: 'live' | 'replay' = 'replay'): Promise<BoardResponse> => {
-    return boardData as unknown as BoardResponse;
+  getBoard: async (mode: 'live' | 'replay' = 'replay'): Promise<BoardResponse> => {
+    const res = { ...(boardData as unknown as BoardResponse), mode };
+    return res;
   },
 
   getAudit: async (_limit: number = 50): Promise<{ audit_events: AuditEvent[] }> => {
@@ -84,20 +87,27 @@ export const mockApi = {
     if (req.city_id === 'delhi' && req.job_type === 'RIDER') {
       return delhiSmogPlan as unknown as DayPlan;
     }
-    // Default to the flagship Delhi heatwave construction plan
     return delhiHeatwavePlan as unknown as DayPlan;
   },
 
   getAdvisory: async (req: AdviseRequest): Promise<AdviseResponse> => {
-    const scenarioId = req.plan.scenario_id || 'delhi-heatwave-2025-06-09';
+    const plan = await mockApi.getPlan(req);
+    const scenarioId = req.scenario || plan.scenario_id || 'delhi-heatwave-2025-06-09';
     const lang = req.language || 'en';
     const scenarioAdvisories = (advisoriesData as Record<string, Record<string, unknown>>)[scenarioId];
-    const adv = scenarioAdvisories?.[lang] || (advisoriesData as Record<string, Record<string, unknown>>)['delhi-heatwave-2025-06-09']['en'];
+    const adv =
+      scenarioAdvisories?.[lang] ||
+      (advisoriesData as Record<string, Record<string, unknown>>)['delhi-heatwave-2025-06-09']?.[lang] ||
+      (advisoriesData as Record<string, Record<string, unknown>>)['delhi-heatwave-2025-06-09']['en'];
 
     return {
-      plan: req.plan,
+      plan,
       advisory: adv as unknown as AdviseResponse['advisory'],
     };
+  },
+
+  getAssumptions: async (): Promise<AssumptionItem[]> => {
+    return assumptionsData as AssumptionItem[];
   },
 
   createCrew: async (crew: Partial<Crew>): Promise<{ crew: Crew }> => {
@@ -111,5 +121,9 @@ export const mockApi = {
       created_at: new Date().toISOString(),
     };
     return { crew: newCrew };
+  },
+
+  deleteCrew: async (crewId: string): Promise<{ deleted: boolean; crew_id: string }> => {
+    return { deleted: true, crew_id: crewId };
   },
 };
