@@ -453,3 +453,97 @@ def test_router_post_advise_validation_errors(test_router):
     }
     res2 = test_router.route(unknown_sc)
     assert res2["statusCode"] == 404
+
+
+# 9. Test: No raw code or enum words across all 48 combinations
+@pytest.mark.parametrize("scenario_id", [
+    "delhi-heatwave-2025-06-09",
+    "delhi-smog-2025-11-23",
+    "chennai-humid-2025-05-31",
+    "coimbatore-mild-2025-01-15",
+])
+@pytest.mark.parametrize("job_type", ["RIDER", "CONSTRUCTION", "VENDOR", "SANITATION"])
+@pytest.mark.parametrize("lang", ["en", "hi", "ta"])
+def test_no_raw_code_or_enum_words_in_all_48_combinations(scenario_id: str, job_type: str, lang: str):
+    plan = get_test_plan(scenario_id, job_type)
+    facts = build_facts_from_plan(plan)
+    advisor = TemplateAdvisor()
+    advisory = advisor.advise(facts, language=lang)
+    assert advisory.validated is True
+
+    prohibited_codes = ["SEEK_HELP_", "HEAT_", "AIR_", "REDUCED_"]
+    prohibited_enums = ["REDUCED", "AVOID", "CAUTION", "EXTREME", "MODERATE", "LIGHT", "HEAVY"]
+
+    for s in advisory.sentences:
+        for code in prohibited_codes:
+            assert code not in s.text, f"Sentence contains prohibited code '{code}': {s.text}"
+        words = [w.strip(".,;:()[]") for w in s.text.split()]
+        for enum_w in prohibited_enums:
+            assert enum_w not in words, f"Sentence contains bare enum word '{enum_w}': {s.text}"
+
+    for sh in advisory.seek_help:
+        for code in prohibited_codes:
+            assert code not in sh, f"Seek help line contains prohibited code '{code}': {sh}"
+        words = [w.strip(".,;:()[]") for w in sh.split()]
+        for enum_w in prohibited_enums:
+            assert enum_w not in words, f"Seek help line contains bare enum word '{enum_w}': {sh}"
+
+
+# 10. Test: Validator rejects raw code or bare enum word
+def test_validator_rejects_raw_code_and_enum_words():
+    plan = get_test_plan("delhi-heatwave-2025-06-09", "CONSTRUCTION")
+    facts = build_facts_from_plan(plan)
+    eid = facts.peak_heat_evidence_id
+
+    # Raw system code
+    bad_code_payload = {
+        "sentences": [
+            {"text": "Work hours are under HEAT_REDUCED_45_15 today.", "evidence_ids": [eid]}
+        ]
+    }
+    res1 = validate_advisory_json(bad_code_payload, facts, language="en")
+    assert res1.is_valid is False
+    assert "contains raw system code" in res1.error
+
+    # Bare uppercase enum word
+    bad_enum_payload = {
+        "sentences": [
+            {"text": "Shift status is REDUCED today.", "evidence_ids": [eid]}
+        ]
+    }
+    res2 = validate_advisory_json(bad_enum_payload, facts, language="en")
+    assert res2.is_valid is False
+    assert "contains raw enum word" in res2.error
+
+
+# 11. Test: Scenario ID, fixture _meta date, and openapi.yaml parity
+def test_scenario_id_fixture_date_and_openapi_parity():
+    from pathlib import Path
+    from chhaya_engine.scenarios import SCENARIOS
+
+    fixtures_dir = Path(__file__).resolve().parent.parent.parent / "engine" / "tests" / "fixtures"
+    openapi_path = Path(__file__).resolve().parent.parent.parent / "docs" / "openapi.yaml"
+    openapi_text = openapi_path.read_text(encoding="utf-8")
+
+    for sc in SCENARIOS:
+        # 1. Parity with fixture file _meta date
+        fpath = fixtures_dir / sc.fixture_filename
+        assert fpath.exists(), f"Fixture file {fpath} does not exist"
+        with open(fpath, "r", encoding="utf-8") as f:
+            fdata = json.load(f)
+        meta_date = fdata.get("_meta", {}).get("date")
+        assert meta_date == sc.date, f"Scenario {sc.id} date {sc.date} != fixture _meta date {meta_date}"
+        assert sc.date in sc.id, f"Scenario {sc.id} does not contain its recorded date {sc.date}"
+
+        # 2. Appears identically in docs/openapi.yaml
+        assert sc.id in openapi_text, f"Scenario ID {sc.id} not found in docs/openapi.yaml"
+
+
+# 12. Test: Heatwave WBGT peak sanity bound
+def test_heatwave_wbgt_peak_sanity_bound():
+    plan = get_test_plan("delhi-heatwave-2025-06-09", "CONSTRUCTION")
+    facts = build_facts_from_plan(plan)
+
+    # Outdoor WBGT in dry heat at Ta <= 45 C should be between 31.0 and 35.0 C
+    assert 30.0 <= facts.peak_heat_c <= 35.0, f"Peak WBGT {facts.peak_heat_c} C outside physical sanity bounds [30, 35]"
+
