@@ -1,6 +1,8 @@
-"""Comprehensive test suite for Phase 3 Chhaya Advisory Agent.
+"""Comprehensive test suite for Phase 3 and Phase 3.1 Chhaya Advisory Agent.
 Covers:
 - TemplateAdvisor across 4 recorded fixtures x 4 job types x 3 languages (48 combinations)
+- Driving evidence card matching rule (A2): old behavior citing ev-wbgt-0000 for 14:00 fails
+- Consecutive Latin word run rejection in Hindi and Tamil (A1)
 - Strict validation rules (sentence limits, evidence IDs, number grounding, script check, medical blocklist)
 - Mock LLM / Converse failure modes and fallback guarantees
 - Daily LLM call cap enforcement
@@ -25,6 +27,7 @@ from chhaya_backend.agent.advisors import (
     get_advisor,
 )
 from chhaya_backend.agent.facts import Facts, build_facts_from_plan
+from chhaya_backend.agent.i18n import get_seek_help_lines
 from chhaya_backend.agent.prompts import build_user_prompt
 from chhaya_backend.agent.validator import is_valid_script, validate_advisory_json
 from chhaya_backend.router import Router
@@ -43,7 +46,6 @@ def get_test_plan(scenario_id: str, job_type: str):
     return plan_day(readings, profile, sc.label, anchor_dt)
 
 
-
 @pytest.fixture
 def mock_store(monkeypatch):
     """In-memory DynamoDB store mock for unit testing."""
@@ -59,7 +61,6 @@ def mock_store(monkeypatch):
     monkeypatch.setattr(store, "add_audit_event", lambda event_type, details: {"id": "test", "event_type": event_type, "details": details})
     monkeypatch.setattr(store, "increment_stats", lambda **kwargs: None)
     return store
-
 
 
 @pytest.fixture
@@ -108,8 +109,12 @@ def test_template_advisor_48_combinations(scenario_id: str, job_type: str, lang:
     assert advisory.mode == "template"
     assert advisory.validated is True
     assert advisory.fallback_reason is None
-    assert 1 <= len(advisory.sentences) <= 5
+    assert 4 <= len(advisory.sentences) <= 5
     assert len(advisory.seek_help) == len(facts.seek_help_lines)
+    
+    # Assert seek help is in target language
+    for sh in advisory.seek_help:
+        assert is_valid_script(sh, lang)
     
     # Assert every sentence cites valid evidence IDs
     valid_eids = facts.get_evidence_ids()
@@ -118,7 +123,7 @@ def test_template_advisor_48_combinations(scenario_id: str, job_type: str, lang:
         for eid in s.evidence_ids:
             assert eid in valid_eids
             
-    # Assert script validity
+    # Assert script validity and no latin runs in hi/ta
     for s in advisory.sentences:
         assert is_valid_script(s.text, lang)
         
@@ -132,12 +137,71 @@ def test_template_advisor_48_combinations(scenario_id: str, job_type: str, lang:
     assert val_res.error is None
 
 
-# 2. Strict Validator Edge Cases
+# 2. A2 Driving Evidence Mapping Test: Old behavior citing ev-wbgt-0000 for peak heat must fail
+def test_validator_mismatched_evidence_id_fails_a2():
+    plan = get_test_plan("delhi-heatwave-2025-06-09", "CONSTRUCTION")
+    facts = build_facts_from_plan(plan)
+    
+    # Sentence states the real peak time (e.g. 14:00) and temp (e.g. 38.2 C) from facts, but cites midnight card ev-wbgt-0000
+    bad_payload = {
+        "sentences": [
+            {
+                "text": f"Peak heat reaches {facts.peak_heat_c:.1f} °C around {facts.peak_heat_hour}.",
+                "evidence_ids": ["ev-wbgt-0000"]
+            }
+        ]
+    }
+    res = validate_advisory_json(bad_payload, facts, language="en")
+    assert res.is_valid is False
+    assert "none of cited evidence_ids ['ev-wbgt-0000'] match those numbers or times" in res.error
+
+
+
+# 3. A1 Latin Word Run Rejection in Hindi and Tamil
+def test_validator_latin_run_rejected_in_hindi_a1():
+    plan = get_test_plan("delhi-heatwave-2025-06-09", "RIDER")
+    facts = build_facts_from_plan(plan)
+    peak_eid = facts.peak_heat_evidence_id
+    
+    # Hindi sentence with run of 3 English words ("drink plenty water")
+    bad_hi_payload = {
+        "sentences": [
+            {
+                "text": "दिल्ली में अत्यधिक गर्मी है, कृपया drink plenty water नियमित रूप से।",
+                "evidence_ids": [peak_eid]
+            }
+        ]
+    }
+    res = validate_advisory_json(bad_hi_payload, facts, language="hi")
+    assert res.is_valid is False
+    assert "contains a run of 3+ consecutive Latin words in hi" in res.error
+
+
+def test_validator_latin_run_rejected_in_tamil_a1():
+    plan = get_test_plan("chennai-humid-2025-05-31", "VENDOR")
+    facts = build_facts_from_plan(plan)
+    peak_eid = facts.peak_heat_evidence_id
+    
+    # Tamil sentence with run of 3 English words ("wear protective cap")
+    bad_ta_payload = {
+        "sentences": [
+            {
+                "text": "சென்னையில் வெப்பம் அதிகம், தயவுசெய்து wear protective cap வெளியில் செல்லும்போது.",
+                "evidence_ids": [peak_eid]
+            }
+        ]
+    }
+    res = validate_advisory_json(bad_ta_payload, facts, language="ta")
+    assert res.is_valid is False
+    assert "contains a run of 3+ consecutive Latin words in ta" in res.error
+
+
+# 4. Strict Validator Edge Cases
 def test_validator_hallucinated_number():
     plan = get_test_plan("delhi-heatwave-2025-06-09", "RIDER")
     facts = build_facts_from_plan(plan)
+    valid_eid = facts.peak_heat_evidence_id
     
-    valid_eid = next(iter(facts.get_evidence_ids()))
     # Hallucinated number 999 is not in plan facts
     bad_payload = {
         "sentences": [
@@ -166,7 +230,7 @@ def test_validator_unknown_evidence_id():
 def test_validator_wrong_script():
     plan = get_test_plan("delhi-smog-2025-11-23", "CONSTRUCTION")
     facts = build_facts_from_plan(plan)
-    valid_eid = next(iter(facts.get_evidence_ids()))
+    valid_eid = facts.peak_heat_evidence_id
     
     # English text provided for Hindi language request
     bad_payload = {
@@ -182,7 +246,7 @@ def test_validator_wrong_script():
 def test_validator_medical_blocklist():
     plan = get_test_plan("chennai-humid-2025-05-31", "VENDOR")
     facts = build_facts_from_plan(plan)
-    valid_eid = next(iter(facts.get_evidence_ids()))
+    valid_eid = facts.peak_heat_evidence_id
     
     # Prohibited medical claim
     bad_payload = {
@@ -198,7 +262,7 @@ def test_validator_medical_blocklist():
 def test_validator_sentence_count_bounds():
     plan = get_test_plan("coimbatore-mild-2025-01-15", "SANITATION")
     facts = build_facts_from_plan(plan)
-    valid_eid = next(iter(facts.get_evidence_ids()))
+    valid_eid = facts.peak_heat_evidence_id
     
     # 0 sentences
     res_0 = validate_advisory_json({"sentences": []}, facts, language="en")
@@ -211,11 +275,11 @@ def test_validator_sentence_count_bounds():
     assert "Expected 1 to 5 sentences" in res_6.error
 
 
-# 3. Mock BedrockConverseAdvisor Success & Failure Fallbacks
+# 5. Mock BedrockConverseAdvisor Success & Failure Fallbacks
 def test_bedrock_advisor_success_first_pass():
     plan = get_test_plan("delhi-heatwave-2025-06-09", "CONSTRUCTION")
     facts = build_facts_from_plan(plan)
-    primary_eid = next(iter(facts.get_evidence_ids()))
+    primary_eid = facts.peak_heat_evidence_id
     
     mock_client = MagicMock()
     mock_client.converse.return_value = {
@@ -224,7 +288,7 @@ def test_bedrock_advisor_success_first_pass():
                 "content": [{
                     "text": json.dumps({
                         "sentences": [
-                            {"text": "High heat warning in Delhi today.", "evidence_ids": [primary_eid]}
+                            {"text": f"High heat warning in Delhi today at {facts.peak_heat_hour}.", "evidence_ids": [primary_eid]}
                         ]
                     })
                 }]
@@ -246,7 +310,7 @@ def test_bedrock_advisor_success_first_pass():
 def test_bedrock_advisor_retry_and_succeed():
     plan = get_test_plan("delhi-heatwave-2025-06-09", "CONSTRUCTION")
     facts = build_facts_from_plan(plan)
-    primary_eid = next(iter(facts.get_evidence_ids()))
+    primary_eid = facts.peak_heat_evidence_id
     
     mock_client = MagicMock()
     # 1st call fails (hallucinated number 9999)
@@ -262,7 +326,7 @@ def test_bedrock_advisor_retry_and_succeed():
         {
             "output": {
                 "message": {
-                    "content": [{"text": json.dumps({"sentences": [{"text": "High heat warning today.", "evidence_ids": [primary_eid]}]})}]
+                    "content": [{"text": json.dumps({"sentences": [{"text": f"High heat warning today at {facts.peak_heat_hour}.", "evidence_ids": [primary_eid]}]})}]
                 }
             }
         },
@@ -299,7 +363,7 @@ def test_bedrock_advisor_fallback_on_double_failure():
     assert advisory.validated is True
     assert advisory.fallback_reason is not None
     assert "Validation failed twice" in advisory.fallback_reason
-    assert len(advisory.sentences) >= 2
+    assert len(advisory.sentences) >= 4
 
 
 def test_bedrock_advisor_fallback_on_client_exception():
@@ -317,7 +381,7 @@ def test_bedrock_advisor_fallback_on_client_exception():
     assert "Bedrock invocation error" in advisory.fallback_reason
 
 
-# 4. Daily LLM call cap fallback
+# 6. Daily LLM call cap fallback
 def test_daily_call_cap_enforcement(mock_store):
     # Set cap to 2 calls
     adv1, reason1 = get_advisor(store=mock_store, max_calls_per_day=2, advisor_mode="converse")
@@ -332,7 +396,7 @@ def test_daily_call_cap_enforcement(mock_store):
     assert isinstance(adv3, TemplateAdvisor)
 
 
-# 5. StrandsAdvisor fallback
+# 7. StrandsAdvisor fallback
 def test_strands_advisor():
     plan = get_test_plan("coimbatore-mild-2025-01-15", "SANITATION")
     facts = build_facts_from_plan(plan)
@@ -344,7 +408,7 @@ def test_strands_advisor():
     assert advisory.mode in ("converse", "template")
 
 
-# 6. End-to-End Router POST /advise
+# 8. End-to-End Router POST /advise
 def test_router_post_advise_template_mode(test_router):
     event = {
         "requestContext": {"http": {"method": "POST"}},
@@ -368,6 +432,7 @@ def test_router_post_advise_template_mode(test_router):
     assert body["advisory"]["language"] == "hi"
     assert body["advisory"]["mode"] == "template"
     assert body["advisory"]["validated"] is True
+    assert len(body["advisory"]["sentences"]) >= 4
 
 
 def test_router_post_advise_validation_errors(test_router):
@@ -388,3 +453,97 @@ def test_router_post_advise_validation_errors(test_router):
     }
     res2 = test_router.route(unknown_sc)
     assert res2["statusCode"] == 404
+
+
+# 9. Test: No raw code or enum words across all 48 combinations
+@pytest.mark.parametrize("scenario_id", [
+    "delhi-heatwave-2025-06-09",
+    "delhi-smog-2025-11-23",
+    "chennai-humid-2025-05-31",
+    "coimbatore-mild-2025-01-15",
+])
+@pytest.mark.parametrize("job_type", ["RIDER", "CONSTRUCTION", "VENDOR", "SANITATION"])
+@pytest.mark.parametrize("lang", ["en", "hi", "ta"])
+def test_no_raw_code_or_enum_words_in_all_48_combinations(scenario_id: str, job_type: str, lang: str):
+    plan = get_test_plan(scenario_id, job_type)
+    facts = build_facts_from_plan(plan)
+    advisor = TemplateAdvisor()
+    advisory = advisor.advise(facts, language=lang)
+    assert advisory.validated is True
+
+    prohibited_codes = ["SEEK_HELP_", "HEAT_", "AIR_", "REDUCED_"]
+    prohibited_enums = ["REDUCED", "AVOID", "CAUTION", "EXTREME", "MODERATE", "LIGHT", "HEAVY"]
+
+    for s in advisory.sentences:
+        for code in prohibited_codes:
+            assert code not in s.text, f"Sentence contains prohibited code '{code}': {s.text}"
+        words = [w.strip(".,;:()[]") for w in s.text.split()]
+        for enum_w in prohibited_enums:
+            assert enum_w not in words, f"Sentence contains bare enum word '{enum_w}': {s.text}"
+
+    for sh in advisory.seek_help:
+        for code in prohibited_codes:
+            assert code not in sh, f"Seek help line contains prohibited code '{code}': {sh}"
+        words = [w.strip(".,;:()[]") for w in sh.split()]
+        for enum_w in prohibited_enums:
+            assert enum_w not in words, f"Seek help line contains bare enum word '{enum_w}': {sh}"
+
+
+# 10. Test: Validator rejects raw code or bare enum word
+def test_validator_rejects_raw_code_and_enum_words():
+    plan = get_test_plan("delhi-heatwave-2025-06-09", "CONSTRUCTION")
+    facts = build_facts_from_plan(plan)
+    eid = facts.peak_heat_evidence_id
+
+    # Raw system code
+    bad_code_payload = {
+        "sentences": [
+            {"text": "Work hours are under HEAT_REDUCED_45_15 today.", "evidence_ids": [eid]}
+        ]
+    }
+    res1 = validate_advisory_json(bad_code_payload, facts, language="en")
+    assert res1.is_valid is False
+    assert "contains raw system code" in res1.error
+
+    # Bare uppercase enum word
+    bad_enum_payload = {
+        "sentences": [
+            {"text": "Shift status is REDUCED today.", "evidence_ids": [eid]}
+        ]
+    }
+    res2 = validate_advisory_json(bad_enum_payload, facts, language="en")
+    assert res2.is_valid is False
+    assert "contains raw enum word" in res2.error
+
+
+# 11. Test: Scenario ID, fixture _meta date, and openapi.yaml parity
+def test_scenario_id_fixture_date_and_openapi_parity():
+    from pathlib import Path
+    from chhaya_engine.scenarios import SCENARIOS
+
+    fixtures_dir = Path(__file__).resolve().parent.parent.parent / "engine" / "tests" / "fixtures"
+    openapi_path = Path(__file__).resolve().parent.parent.parent / "docs" / "openapi.yaml"
+    openapi_text = openapi_path.read_text(encoding="utf-8")
+
+    for sc in SCENARIOS:
+        # 1. Parity with fixture file _meta date
+        fpath = fixtures_dir / sc.fixture_filename
+        assert fpath.exists(), f"Fixture file {fpath} does not exist"
+        with open(fpath, "r", encoding="utf-8") as f:
+            fdata = json.load(f)
+        meta_date = fdata.get("_meta", {}).get("date")
+        assert meta_date == sc.date, f"Scenario {sc.id} date {sc.date} != fixture _meta date {meta_date}"
+        assert sc.date in sc.id, f"Scenario {sc.id} does not contain its recorded date {sc.date}"
+
+        # 2. Appears identically in docs/openapi.yaml
+        assert sc.id in openapi_text, f"Scenario ID {sc.id} not found in docs/openapi.yaml"
+
+
+# 12. Test: Heatwave WBGT peak sanity bound
+def test_heatwave_wbgt_peak_sanity_bound():
+    plan = get_test_plan("delhi-heatwave-2025-06-09", "CONSTRUCTION")
+    facts = build_facts_from_plan(plan)
+
+    # Outdoor WBGT in dry heat at Ta <= 45 C should be between 31.0 and 35.0 C
+    assert 30.0 <= facts.peak_heat_c <= 35.0, f"Peak WBGT {facts.peak_heat_c} C outside physical sanity bounds [30, 35]"
+

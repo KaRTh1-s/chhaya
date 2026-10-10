@@ -91,12 +91,34 @@ Invoke-RestMethod -Uri "http://localhost:8787/crews" -Method Get
 Invoke-RestMethod -Uri "http://localhost:8787/audit?limit=5" -Method Get
 ```
 
-## Packaging for AWS Lambda
+## Packaging & Deploying to AWS
 
+### 1. Build Packages
 ```powershell
 .\scripts\build_backend.ps1
 ```
-This packages both `ApiFunction` (`backend/build/`) and `AdvisorFunction` (`backend/build_advisor/`) ready for AWS SAM deployment.
+Packages `ApiFunction` (`backend/build/`) and `AdvisorFunction` (`backend/build_advisor/`).
+
+### 2. Deploy with AWS SAM
+Prerequisites: `sam` CLI, `aws` CLI configured with active credentials.
+```powershell
+# Set write passcode for crew mutations
+$env:CHHAYA_PASSCODE = "your-secure-passcode"
+
+# Deploy to AWS ap-south-1
+.\scripts\deploy_backend.ps1
+```
+
+### 3. Run Smoke Tests & Benchmark
+```powershell
+.\scripts\smoke_api.ps1 -ApiUrl "https://<api-id>.execute-api.ap-south-1.amazonaws.com" -Passcode "your-secure-passcode"
+```
+
+### 4. Teardown
+```powershell
+.\scripts\teardown_backend.ps1
+```
+
 
 
 ## Web Application (Vite + React + TypeScript)

@@ -5,12 +5,13 @@ Chhaya is designed as a serverless, decoupled microservice built on AWS Lambda, 
 
 ## Split Lambda Architecture
 
-To ensure sub-20ms cold starts for core planning calculations while enabling rich generative AI worker guidance, the backend is split into two specialized Lambda functions:
+To maintain fast cold starts for core planning calculations while isolating generative AI worker guidance dependencies, the backend is split into two specialized Lambda functions:
 
 1. **`ApiFunction` (Core Engine & Data Plane)**:
    - Zero 3rd-party runtime dependencies (Python 3.11 stdlib + `boto3` + `chhaya_engine`).
    - Handles `/health`, `/cities`, `/scenarios`, `/plan`, `/board`, `/stats`, `/audit`, `/crews`.
    - Memory: 512 MB, Timeout: 30s.
+
 
 2. **`AdvisorFunction` (Generative AI & Plain-Language Copilot)**:
    - Dedicated handler for `POST /advise`.
@@ -34,7 +35,7 @@ flowchart TD
     Facts --> RateCheck{"Daily Cap Reached? (>300 calls)"}
     RateCheck -->|Yes (daily_cap)| TemplateFallback["TemplateAdvisor (en/hi/ta)"]
     
-    RateCheck -->|No| BedrockConverse["Bedrock Converse API (Amazon Nova Micro / ap-south-1)"]
+    RateCheck -->|No| BedrockConverse["Bedrock Converse API (apac.amazon.nova-micro-v1:0 / ap-south-1)"]
     
     BedrockConverse --> Val1{"Strict Validator (Pass 1)"}
     Val1 -->|Valid JSON + Grounded Numbers + Citations| AdvisoryOutput["Advisory JSON Response (200 OK)"]
@@ -48,6 +49,9 @@ flowchart TD
     TemplateFallback --> AdvisoryOutput
     AdvisoryOutput --> AuditLog["Append-only Audit Log (No PII / No Prompt Text)"]
 ```
+
+> [!NOTE]
+> **Data Privacy & Model Routing**: The Bedrock integration utilizes Asia-Pacific regional inference profiles (`apac.amazon.nova-micro-v1:0`) which route dynamically across APAC AWS data centers for high availability. Strictly zero personal data, worker identifiers, or crew names are sent to the model—only computed anonymous plan facts (hourly temperatures, AQI levels, and schedule intervals).
 
 ## Grounding & Safety Validator Rules
 
