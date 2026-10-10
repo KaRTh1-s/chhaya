@@ -21,6 +21,7 @@ REGISTERED_ROUTES = [
     ("GET", "/cities"),
     ("GET", "/scenarios"),
     ("POST", "/plan"),
+    ("POST", "/advise"),
     ("GET", "/board"),
     ("GET", "/stats"),
     ("GET", "/audit"),
@@ -68,6 +69,10 @@ class Router:
         # 3. Plan
         if method == "POST" and path == "/plan":
             return self.handle_plan(event)
+
+        # 3b. Advise
+        if method == "POST" and path == "/advise":
+            return self.handle_advise(event)
 
         # 4. Risk Board
         if method == "GET" and path == "/board":
@@ -143,6 +148,66 @@ class Router:
 
         plan_dict = self.plan_service.generate_plan(params)
         return build_response(200, plan_dict, cors_origin=self.config.cors_origin)
+
+    def handle_advise(self, event: dict[str, Any]) -> dict[str, Any]:
+        import os
+        from chhaya_backend.agent.advisors import Advisory, get_advisor
+        from chhaya_backend.agent.facts import build_facts_from_plan
+
+        body = event.get("body")
+        if not body:
+            return error_response(400, "INVALID_REQUEST", "Missing request body", cors_origin=self.config.cors_origin)
+
+        try:
+            payload = json.loads(body) if isinstance(body, str) else body
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return error_response(400, "INVALID_JSON", "Malformed JSON body", cors_origin=self.config.cors_origin)
+
+        language = str(payload.get("language", "en")).lower()
+        if language not in ("en", "hi", "ta"):
+            language = "en"
+
+        params, err = self.plan_service.validate_plan_request(payload)
+        if err:
+            status_code = 404 if "Unknown" in err or "not found" in err.lower() else 400
+            error_code = "NOT_FOUND" if status_code == 404 else "VALIDATION_ERROR"
+            return error_response(status_code, error_code, err, cors_origin=self.config.cors_origin)
+
+        plan_dict = self.plan_service.generate_plan(params)
+        facts = build_facts_from_plan(plan_dict)
+
+        max_llm_calls = int(os.environ.get("MAX_LLM_CALLS_PER_DAY", 300))
+        advisor, cap_reason = get_advisor(store=self.store, max_calls_per_day=max_llm_calls)
+
+        advisory = advisor.advise(facts, language=language)
+        if cap_reason:
+            advisory = Advisory(
+                language=advisory.language,
+                mode=advisory.mode,
+                model_id=advisory.model_id,
+                sentences=advisory.sentences,
+                seek_help=advisory.seek_help,
+                validated=advisory.validated,
+                fallback_reason=cap_reason,
+                latency_ms=advisory.latency_ms,
+            )
+
+        # Audit event without PII / text
+        self.audit_service.log_event("ADVISORY_GENERATED", {
+            "mode": advisory.mode,
+            "language": advisory.language,
+            "validated": advisory.validated,
+            "fallback_reason": advisory.fallback_reason,
+        })
+
+        # Update stats
+        is_fp_valid = (advisory.mode != "template" or advisory.fallback_reason is None)
+        self.stats_service.record_advisory(first_pass_valid=is_fp_valid)
+
+        return build_response(200, {
+            "plan": plan_dict,
+            "advisory": advisory.to_dict(),
+        }, cors_origin=self.config.cors_origin)
 
     def handle_board(self, event: dict[str, Any]) -> dict[str, Any]:
         params = event.get("queryStringParameters") or {}

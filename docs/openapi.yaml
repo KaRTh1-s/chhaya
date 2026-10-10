@@ -99,6 +99,36 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /advise:
+    post:
+      summary: Generate plain-language worker advisory
+      description: Generates grounded shift guidance in English, Hindi, or Tamil pinned to computed evidence cards.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdviseRequest'
+      responses:
+        '200':
+          description: Plan and validated advisory generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdviseResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: City or scenario not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /board:
     get:
       summary: Get Risk Board matrix
@@ -507,6 +537,61 @@ components:
           type: integer
           default: 1
 
+    AdviseRequest:
+      allOf:
+        - $ref: '#/components/schemas/PlanRequest'
+        - type: object
+          properties:
+            language:
+              type: string
+              enum: [en, hi, ta]
+              default: en
+            advisor_backend:
+              type: string
+              enum: [bedrock, strands, template]
+              default: bedrock
+
+    AdviseResponse:
+      type: object
+      properties:
+        plan:
+          $ref: '#/components/schemas/DayPlan'
+        advisory:
+          $ref: '#/components/schemas/Advisory'
+
+    Advisory:
+      type: object
+      properties:
+        language:
+          type: string
+          enum: [en, hi, ta]
+        sentences:
+          type: array
+          items:
+            $ref: '#/components/schemas/Sentence'
+        used_fallback:
+          type: boolean
+        fallback_reason:
+          type: string
+          nullable: true
+        model_id:
+          type: string
+        prompt_version:
+          type: string
+        raw_llm_response:
+          type: string
+          nullable: true
+
+    Sentence:
+      type: object
+      properties:
+        text:
+          type: string
+        evidence_ids:
+          type: array
+          items:
+            type: string
+
     ErrorResponse:
       type: object
       properties:
@@ -517,3 +602,4 @@ components:
               type: string
             message:
               type: string
+
