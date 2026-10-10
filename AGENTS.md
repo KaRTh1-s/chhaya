@@ -8,5 +8,5 @@
 **Instructions**:
 - Read docs/PROJECT_BRIEF.md, docs/DESIGN_BRIEF.md, and docs/ROADMAP.md first before working.
 - Keep commits small and logical.
-- Run `make test` before declaring a phase done.
+- Run `make test` (or `.\scripts\dev.ps1 test` on Windows) before declaring a phase done.
 - Update docs/ROADMAP.md checkboxes and CHANGELOG.md at the end of every phase.
