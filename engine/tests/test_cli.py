@@ -1,12 +1,14 @@
-import sys
 import json
-import pytest
-from unittest.mock import patch
+import sys
 from io import StringIO
+
+import pytest
+
 from chhaya_engine.cli import main
 
+
 def test_cli_json(monkeypatch):
-    test_args = ["cli", "--city", "delhi", "--job", "rider", "--fixture", "engine/tests/fixtures/delhi_summer_heat.json", "--json", "--now", "2026-05-01T12:00:00Z"]
+    test_args = ["cli", "--city", "delhi", "--job", "rider", "--fixture", "engine/tests/fixtures/real_delhi_summer_heat.json", "--json", "--now", "2025-06-09T12:00:00Z"]
     monkeypatch.setattr(sys, 'argv', test_args)
     
     captured_output = StringIO()
@@ -19,7 +21,7 @@ def test_cli_json(monkeypatch):
     assert data["city_label"] == "Delhi"
 
 def test_cli_human(monkeypatch):
-    test_args = ["cli", "--city", "delhi", "--job", "rider", "--fixture", "engine/tests/fixtures/delhi_summer_heat.json", "--now", "2026-05-01T12:00:00Z"]
+    test_args = ["cli", "--city", "delhi", "--job", "rider", "--fixture", "engine/tests/fixtures/real_delhi_summer_heat.json", "--now", "2025-06-09T12:00:00Z"]
     monkeypatch.setattr(sys, 'argv', test_args)
     
     captured_output = StringIO()
