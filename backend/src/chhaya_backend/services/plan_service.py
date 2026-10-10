@@ -14,6 +14,11 @@ from chhaya_engine.models import (
     create_worker_profile,
 )
 from chhaya_engine.planner import plan_day
+from chhaya_engine.scenarios import (
+    Scenario,
+    get_scenario,
+    load_scenario_readings,
+)
 
 from chhaya_backend.config import get_config
 from chhaya_backend.services.audit_service import AuditService
@@ -21,6 +26,12 @@ from chhaya_backend.services.stats_service import StatsService
 from chhaya_backend.store import DynamoDBStore
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent / "engine" / "tests" / "fixtures"
+
+SUPPORTED_FIXTURE_CITIES = {
+    "delhi": "real_delhi_summer_heat.json",
+    "chennai": "real_chennai_humid_day.json",
+    "coimbatore": "real_coimbatore_mild.json",
+}
 
 class PlanService:
     def __init__(self, store: DynamoDBStore, audit_service: AuditService, stats_service: StatsService):
@@ -34,6 +45,13 @@ class PlanService:
         if not isinstance(payload, dict):
             return None, "Request body must be a JSON object"
 
+        scenario_req = payload.get("scenario")
+        scenario_obj: Scenario | None = None
+        if scenario_req and str(scenario_req).lower() != "live":
+            scenario_obj = get_scenario(str(scenario_req))
+            if not scenario_obj:
+                return None, f"Unknown scenario '{scenario_req}'"
+
         city_id = payload.get("city_id")
         lat = payload.get("lat")
         lon = payload.get("lon")
@@ -42,10 +60,21 @@ class PlanService:
         target_lat = None
         target_lon = None
 
-        if city_id:
+        if scenario_obj:
+            if city_id and str(city_id).lower() != scenario_obj.city_id:
+                return None, f"Scenario '{scenario_obj.id}' belongs to city '{scenario_obj.city_id}', but '{city_id}' was requested"
+            city_id = scenario_obj.city_id
+            city = get_city(city_id)
+            if city:
+                city_label = city.name
+                target_lat = round(city.lat, 2)
+                target_lon = round(city.lon, 2)
+        elif city_id:
             city = get_city(str(city_id))
             if not city:
                 return None, f"Unknown city_id '{city_id}'"
+            if self.config.data_mode == "fixture" and city.id not in SUPPORTED_FIXTURE_CITIES:
+                return None, f"Unknown city_id '{city_id}' for fixture mode. Supported fixture cities: {', '.join(SUPPORTED_FIXTURE_CITIES.keys())}"
             city_label = city.name
             target_lat = round(city.lat, 2)
             target_lon = round(city.lon, 2)
@@ -62,8 +91,19 @@ class PlanService:
             target_lat = round(f_lat, 2)
             target_lon = round(f_lon, 2)
             city_label = f"Location ({target_lat:.2f}, {target_lon:.2f})"
+
+            if self.config.data_mode == "fixture":
+                # Match to closest fixture city
+                if abs(target_lat - 13.08) < 1.0 and abs(target_lon - 80.27) < 1.0:
+                    city_id = "chennai"
+                elif abs(target_lat - 28.61) < 1.0 and abs(target_lon - 77.23) < 1.0:
+                    city_id = "delhi"
+                elif abs(target_lat - 11.01) < 1.0 and abs(target_lon - 76.95) < 1.0:
+                    city_id = "coimbatore"
+                else:
+                    return None, f"Coordinates ({target_lat}, {target_lon}) outside fixture coverage. Supported fixture cities: {', '.join(SUPPORTED_FIXTURE_CITIES.keys())}"
         else:
-            return None, "Must provide either 'city_id' or both 'lat' and 'lon'"
+            return None, "Must provide either 'city_id', 'scenario', or both 'lat' and 'lon'"
 
         # Job type
         job_type_str = payload.get("job_type")
@@ -122,22 +162,16 @@ class PlanService:
             "preferred_start_hour": start_hr,
             "preferred_end_hour": end_hr,
             "max_shift_hours": max_shift,
+            "scenario": scenario_obj,
         }, None
 
     def _load_fixture_readings(self, city_id: str | None) -> list[HourlyReading]:
-        filename = "real_coimbatore_mild.json"
-        if city_id:
-            c = city_id.lower()
-            if "delhi" in c:
-                filename = "real_delhi_summer_heat.json"
-            elif "chennai" in c:
-                filename = "real_chennai_humid_day.json"
-            elif "coimbatore" in c:
-                filename = "real_coimbatore_mild.json"
+        if not city_id or city_id.lower() not in SUPPORTED_FIXTURE_CITIES:
+            raise ValueError(f"Unknown city_id '{city_id}' for fixture mode")
 
+        filename = SUPPORTED_FIXTURE_CITIES[city_id.lower()]
         fixture_path = FIXTURES_DIR / filename
         if not fixture_path.exists():
-            # Fallback if running from packaged build
             fixture_path = Path("engine/tests/fixtures") / filename
 
         with open(fixture_path, "r", encoding="utf-8") as f:
@@ -157,7 +191,16 @@ class PlanService:
                     ))
             return readings
 
-    def get_readings(self, lat: float, lon: float, city_id: str | None = None) -> list[HourlyReading]:
+    def get_readings(
+        self,
+        lat: float,
+        lon: float,
+        city_id: str | None = None,
+        scenario: Scenario | None = None
+    ) -> list[HourlyReading]:
+        if scenario:
+            return load_scenario_readings(scenario)
+
         if self.config.data_mode == "fixture":
             return self._load_fixture_readings(city_id)
 
@@ -179,7 +222,6 @@ class PlanService:
 
         # Live fetch
         readings = self.openmeteo.fetch_forecast(lat, lon)
-        # Store in cache
         dict_readings = [r.to_dict() for r in readings]
         self.store.put_readings_cache(lat_lon_key, dict_readings, ttl_seconds=1800)
         self.audit_service.log_event("CACHE_REFRESH", {"location": lat_lon_key, "count": len(readings)})
@@ -194,12 +236,23 @@ class PlanService:
             preferred_end_hour=params["preferred_end_hour"],
             max_shift_hours=params["max_shift_hours"],
         )
-        
-        now = now or datetime.now(UTC)
-        readings = self.get_readings(params["lat"], params["lon"], params.get("city_id"))
-        
+
+        scenario: Scenario | None = params.get("scenario")
+        if scenario:
+            now = datetime.fromisoformat(f"{scenario.date}T00:00:00+00:00")
+            data_source = "replay"
+            scenario_id = scenario.id
+            recorded_date = scenario.date
+            readings = self.get_readings(params["lat"], params["lon"], params.get("city_id"), scenario=scenario)
+        else:
+            now = now or datetime.now(UTC)
+            data_source = self.config.data_mode
+            scenario_id = None
+            recorded_date = None
+            readings = self.get_readings(params["lat"], params["lon"], params.get("city_id"))
+
         day_plan = plan_day(readings, profile, params["city_label"], now)
-        
+
         # Record stats & audit
         self.stats_service.record_plan(day_plan)
         self.audit_service.log_event("PLAN_GENERATED", {
@@ -207,6 +260,12 @@ class PlanService:
             "job_type": profile.job_type.value,
             "overall_risk": day_plan.overall_risk.value,
             "no_safe_window": day_plan.no_safe_window,
+            "data_source": data_source,
+            "scenario_id": scenario_id,
         })
-        
-        return day_plan.to_dict()
+
+        plan_dict = day_plan.to_dict()
+        plan_dict["data_source"] = data_source
+        plan_dict["scenario_id"] = scenario_id
+        plan_dict["recorded_date"] = recorded_date
+        return plan_dict

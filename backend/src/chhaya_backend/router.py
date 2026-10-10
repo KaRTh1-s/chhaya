@@ -19,6 +19,7 @@ from chhaya_backend.store import DynamoDBStore
 REGISTERED_ROUTES = [
     ("GET", "/health"),
     ("GET", "/cities"),
+    ("GET", "/scenarios"),
     ("POST", "/plan"),
     ("GET", "/board"),
     ("GET", "/stats"),
@@ -60,13 +61,17 @@ class Router:
         if method == "GET" and path == "/cities":
             return self.handle_cities()
 
+        # 2b. Scenarios
+        if method == "GET" and path == "/scenarios":
+            return self.handle_scenarios()
+
         # 3. Plan
         if method == "POST" and path == "/plan":
             return self.handle_plan(event)
 
         # 4. Risk Board
         if method == "GET" and path == "/board":
-            return self.handle_board()
+            return self.handle_board(event)
 
         # 5. Stats
         if method == "GET" and path == "/stats":
@@ -115,6 +120,11 @@ class Router:
         } for c in cities]
         return build_response(200, {"cities": data}, cors_origin=self.config.cors_origin)
 
+    def handle_scenarios(self) -> dict[str, Any]:
+        from chhaya_engine.scenarios import list_scenarios
+        scenarios = list_scenarios()
+        return build_response(200, {"scenarios": [s.to_dict() for s in scenarios]}, cors_origin=self.config.cors_origin)
+
     def handle_plan(self, event: dict[str, Any]) -> dict[str, Any]:
         body = event.get("body")
         if not body:
@@ -127,13 +137,17 @@ class Router:
 
         params, err = self.plan_service.validate_plan_request(payload)
         if err:
-            return error_response(400, "VALIDATION_ERROR", err, cors_origin=self.config.cors_origin)
+            status_code = 404 if "Unknown" in err or "not found" in err.lower() else 400
+            error_code = "NOT_FOUND" if status_code == 404 else "VALIDATION_ERROR"
+            return error_response(status_code, error_code, err, cors_origin=self.config.cors_origin)
 
         plan_dict = self.plan_service.generate_plan(params)
         return build_response(200, plan_dict, cors_origin=self.config.cors_origin)
 
-    def handle_board(self) -> dict[str, Any]:
-        board_data = self.board_service.get_risk_board()
+    def handle_board(self, event: dict[str, Any]) -> dict[str, Any]:
+        params = event.get("queryStringParameters") or {}
+        mode = params.get("mode", "live").lower()
+        board_data = self.board_service.get_risk_board(mode=mode)
         return build_response(200, board_data, cors_origin=self.config.cors_origin)
 
     def handle_stats(self) -> dict[str, Any]:

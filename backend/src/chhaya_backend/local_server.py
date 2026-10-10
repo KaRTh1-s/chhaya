@@ -40,15 +40,16 @@ def setup_mock_dynamodb(table_name: str, region: str):
             "created_at": "2026-10-10T00:00:00+00:00",
         })
 
-    # Seed initial global stats
-    table.put_item(Item={
-        "pk": "STATS#GLOBAL",
-        "sk": "STATS",
-        "plans_generated": 142,
-        "hours_flagged": 418,
-        "lead_time_sum": 384,
-        "lead_time_count": 120,
-    })
+    # Seed initial global stats ONLY when CHHAYA_SEED_DEMO=1
+    if os.environ.get("CHHAYA_SEED_DEMO") == "1":
+        table.put_item(Item={
+            "pk": "STATS#GLOBAL",
+            "sk": "STATS",
+            "plans_generated": 142,
+            "hours_flagged": 418,
+            "lead_time_sum": 384,
+            "lead_time_count": 120,
+        })
 
     return dynamodb
 
