@@ -30,12 +30,17 @@ switch ($Command) {
     "run-cli" {
         .venv\Scripts\python -m chhaya_engine.cli $Args
     }
+    "serve" {
+        $env:PYTHONPATH = "engine\src;backend\src;backend"
+        .venv\Scripts\python -m chhaya_backend.local_server $Args
+    }
     "clean" {
         if (Test-Path .venv) { Remove-Item -Recurse -Force .venv }
         if (Test-Path web\node_modules) { Remove-Item -Recurse -Force web\node_modules }
         if (Test-Path web\dist) { Remove-Item -Recurse -Force web\dist }
+        if (Test-Path backend\build) { Remove-Item -Recurse -Force backend\build }
     }
     default {
-        Write-Host "Usage: .\scripts\dev.ps1 <setup|test|lint|run-cli|clean>"
+        Write-Host "Usage: .\scripts\dev.ps1 <setup|test|lint|run-cli|serve|clean>"
     }
 }
